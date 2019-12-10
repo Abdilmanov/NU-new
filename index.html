@@ -72,7 +72,7 @@
       .activeUl {
         display: block !important;
       }
-      .search-button {
+      .button {
         /* display: inline-block; */
         float: right;
         align-items: center;
@@ -104,7 +104,18 @@
       .search-item {
         display: inline-block;
       }
-
+      .button-stairs-elevator {
+        display: inline-block;
+      }
+      /* .direction-div {
+        display: none;
+      } */
+      /* .open {
+        display: inline-block;
+      }
+      .close {
+        display: none;
+      } */
       /* .input-field > label:not(.label-icon).active {
           -webkit-transform: translateY(-14px) scale(0.8);
           transform: translateY(-2px) scale(0.9) !important;
@@ -212,13 +223,13 @@
           addFloorLayer(el.layer_id, el.title);
         })
 
-        function addFloorLayer (layer_id, title) {
+        function addFloorLayer(layer_id, title) {
           const floorLayer = new FeatureLayer({
             spatialReference: 3857,
             opacity: 1,
             title: title,
             url:
-              "https://10.10.17.13:6443/arcgis/rest/services/CampusMap2d_MIL1/MapServer/",
+              "https://kas.nu.edu.kz/arcgis/rest/services/CampusMap2d_MIL1/MapServer/",
             layerId: layer_id
           });
           map.layers.add(floorLayer);
@@ -237,11 +248,14 @@
 
         // **Direction** 10.10.17.13:6443  kazaerospace01 kas.nu.edu.kz
         var stairs_url =
-          "https://10.10.17.13:6443/arcgis/rest/services/NU/routeStairs/NAServer/%D0%9C%D0%B0%D1%80%D1%88%D1%80%D1%83%D1%82";
+          "https://kas.nu.edu.kz/arcgis/rest/services/NU/routeStairs/NAServer/%D0%9C%D0%B0%D1%80%D1%88%D1%80%D1%83%D1%82";
         var elevator_url =
-          "https://10.10.17.13:6443/arcgis/rest/services/NU/Routeelevator/NAServer/%D0%9C%D0%B0%D1%80%D1%88%D1%80%D1%83%D1%82";
-        var routeTask = new RouteTask({
+          "https://kas.nu.edu.kz/arcgis/rest/services/NU/Routeelevator/NAServer/%D0%9C%D0%B0%D1%80%D1%88%D1%80%D1%83%D1%82";
+        var routeTaskStairs = new RouteTask({
           url: stairs_url
+        });
+        var routeTaskElev = new RouteTask({
+          url: elevator_url
         });
 
         // var directionsWidget = new Directions({
@@ -256,7 +270,7 @@
         //       {
         //         locator: new Locator({
         //           url:
-        //             "https://10.10.17.13:6443/arcgis/rest/services/NU/RoomsLocSF/GeocodeServer"
+        //             "https://kas.nu.edu.kz/arcgis/rest/services/NU/RoomsLocSF/GeocodeServer"
         //         }),
         //         outFields: ["*"]
         //       }
@@ -375,7 +389,8 @@
           // });
 
         });
-
+        
+        // create finish point
         const checkFinishPoint = (map_point) => {
           let finish_point = {
               type: "point",
@@ -473,11 +488,11 @@
 
         };
 
-        // Запрос для Своего
+        // query for dropdown list
         const doQuery = (value) => {
           // console.log("doQuery");
           let qTask = new QueryTask({
-            url: `https://10.10.17.13:6443/arcgis/rest/services/CampusMap2d_MIL1/MapServer/3`
+            url: `https://kas.nu.edu.kz/arcgis/rest/services/CampusMap2d_MIL1/MapServer/3`
           });
           
           let sqlTxt = checkValue(value);
@@ -496,6 +511,7 @@
         var dropdownListR = [];
         var dropdownListN = [];
         var dropdownListB = [];
+        // get query results
         const getResultsSelf = (response) => {
           // console.log("features = ", response.features);
           let features = response.features;
@@ -574,6 +590,7 @@
           console.error("Promise rejected: ", error.message);
         };
         
+        // checks which sql text to return
         const checkValue = (value) => {
           let text = '';
           if (/[0-9]/.test(value)) {
@@ -583,19 +600,7 @@
           }
           // console.log(text);
           return text;
-        }
-
-        const checkIdentical = (res) => {
-          let check = true;
-          dropdownList.forEach((el) => {
-            if (res == el.roomnum) {
-              check = false;
-              return;
-            }
-          });
-          return check;
-        };
-        
+        }      
         // Закрываем dropdownList
         const CloseDropdown = () => {
           // console.log("close dropdown")
@@ -630,10 +635,11 @@
           }
         };
 
+        // query after click to dropdown list
         const doQueryResult = () => {
           // console.log("doQuery");
           let qTask = new QueryTask({
-            url: `https://10.10.17.13:6443/arcgis/rest/services/CampusMap2d_MIL1/MapServer/3`
+            url: `https://kas.nu.edu.kz/arcgis/rest/services/CampusMap2d_MIL1/MapServer/3`
           });
 
           let sqlTxt = findSqlText();
@@ -650,6 +656,7 @@
             .catch(promiseRejected);
         }
         
+        // get query results
         const getResultsEnd = (response) => {
           console.log("features = ", response.features);
           let features = response.features;
@@ -690,6 +697,7 @@
 
         };
 
+        // return sql text request
         const findSqlText = () => {
           // console.log(dropdownListR)
           // console.log(dropdownListN)
@@ -708,14 +716,15 @@
           }
           return text;
         }
-      
+        
+        var finish_point;
         window.createDirection = (lat, long) => {
           view.popup.close();
           view.graphics.removeAll();//??
           addGraphic("start", start_point);//??
 
           console.log(lat, long)
-          let finish_point = {
+          finish_point = {
             type: "point",
             latitude: lat,
             longitude: long
@@ -732,6 +741,7 @@
           // directionsWidget.getDirections();
         }
 
+        // add start/finish point
         const addGraphic = (type, point) => {
             var graphic = new Graphic({
             symbol: {
@@ -744,7 +754,17 @@
             view.graphics.add(graphic);
         }
         
+        var route_task = "stairs";
+        // get route
         const getRoute = () => {
+          console.log(view.graphics)
+            console.log('route', route_task)
+          // let dir_div = document.getElementById("direction_div");
+          // dir_div.classList.remove('open');
+          section_ol.innerHTML = "";
+          view.graphics.removeAll();
+          addGraphic("start", start_point);
+          addGraphic("finish", checkFinishPoint(finish_point));
           view.ui.empty("top-right");
           // Setup the route parameters
           var routeParams = new RouteParameters({
@@ -753,78 +773,89 @@
             }),
             returnDirections: true
           });
-          // Get the route
-          routeTask.solve(routeParams).then((data) => {
-            console.log('data', data)
-            // Display the route
-            data.routeResults.forEach((result) => {
-              result.route.symbol = {
-              type: "simple-line",
-              color: [38, 166, 149],
-              width: 3
-              };
-              view.graphics.add(result.route);
+          if (route_task == "stairs") {
+            console.log('to stairs')
+            // Get the route
+            routeTaskStairs.solve(routeParams).then((data) => {
+              // console.log('data', data.routeResults[0].directions.features)
+              // Display the route
+              addSymbol(data.routeResults);
+
+              // Show the direction list
+              let features = data.routeResults[0].directions.features;
+              addRouteList(features);
+
             });
-
-            //*** ADD ***//
-
-            // Display the directions
-            let direction_div = document.createElement("div");
-            direction_div.classList = "esri-widget esri-widget--panel esri-directions__scroller";
-            let direction_section = document.createElement("section");
-            direction_section.classList = "esri-directions__maneuver-section";
-            let direction_ol = document.createElement("ol");
-            direction_ol.classList = "esri-directions__maneuver-list";
-            direction_ol.style.marginTop = 0;
-            direction_ol.style.paddingTop = "15px";
-            direction_div.appendChild(direction_section);
-            direction_section.appendChild(direction_ol);
-            
-            // Show the directions
-            let features = data.routeResults[0].directions.features;
-            features.forEach((result, i) => {
-              let direction_li = document.createElement("li");
-              direction_li.classList = "esri-directions__maneuver";
-              
-              let img = document.createElement("img");
-              img.classList = "esri-directions__maneuver-icon";
-              img.setAttribute("src", addImg(result.attributes.text));
-
-              let div1 = document.createElement("div");
-              div1.classList = "esri-directions__maneuver-costs-container";
-
-              let span = document.createElement("span");
-              span.innerHTML = result.attributes.text;
-
-              let div2 = document.createElement("div");
-              div2.classList = "esri-directions__maneuver-costs";
-
-              let div31 = document.createElement("div");
-              div31.classList = "esri-directions__horizontal-splitter";
-              let div32 = document.createElement("div");
-              div32.classList = "esri-directions__cost--intermediate";
-              div32.setAttribute("title", "Расстояние");
-              div32.innerHTML = result.attributes.length + " meters";
-
-              div2.appendChild(div31);
-              div2.appendChild(div32);
-              div1.appendChild(span);
-              div1.appendChild(div2);
-              direction_li.appendChild(img);
-              direction_li.appendChild(div1);
-              direction_ol.appendChild(direction_li);
-            });
-            
-            // Add directions to the view
             view.ui.add(direction_div, "top-right");
-            //     if (checkStairsElev == 'stairs') {
-            //   view.ui.add(change_dir1, "top-right");
-            // } else {
-            //   view.ui.add(change_dir2, "top-right");
-            // }           
+            // console.log(direction_div)
+            // let dir_div = document.getElementById("direction_div");
+            // dir_div.classList.add('open');
+          } else if (route_task == "elevator") {
+            console.log('to elevator')
+            routeTaskElev.solve(routeParams).then((data) => {
+              // console.log('data', data.routeResults[0].directions.features)
+              // Display the route
+              addSymbol(data.routeResults);
+
+              // Show the direction list
+              let features = data.routeResults[0].directions.features;
+              addRouteList(features);
+              
+            })
+            view.ui.add(direction_div, "top-right");
+            // console.log(direction_div)
+            // let dir_div = document.getElementById("direction_div");
+            // dir_div.classList.add('open');
+          }
+        }
+
+        const addSymbol = (route_result) => {
+          route_result.forEach((result) => {
+            result.route.symbol = {
+            type: "simple-line",
+            color: [38, 166, 149],
+            width: 3
+            };
+            view.graphics.add(result.route);
           });
         }
 
+        const addRouteList = (features) => {
+          features.forEach((result, i) => {
+            let section_li = document.createElement("li");
+            section_li.classList = "esri-directions__maneuver";
+            
+            let img = document.createElement("img");
+            img.classList = "esri-directions__maneuver-icon";
+            img.setAttribute("src", addImg(result.attributes.text));
+
+            let div1 = document.createElement("div");
+            div1.classList = "esri-directions__maneuver-costs-container";
+
+            let span = document.createElement("span");
+            span.innerHTML = result.attributes.text;
+
+            let div2 = document.createElement("div");
+            div2.classList = "esri-directions__maneuver-costs";
+
+            let div31 = document.createElement("div");
+            div31.classList = "esri-directions__horizontal-splitter";
+            let div32 = document.createElement("div");
+            div32.classList = "esri-directions__cost--intermediate";
+            div32.setAttribute("title", "Расстояние");
+            div32.innerHTML = result.attributes.length + " meters";
+
+            div2.appendChild(div31);
+            div2.appendChild(div32);
+            div1.appendChild(span);
+            div1.appendChild(div2);
+            section_li.appendChild(img);
+            section_li.appendChild(div1);
+            section_ol.appendChild(section_li);
+          });
+        }
+
+        // add image for direction list
         const addImg = (text) => {
           // console.log(text)
           // let start = text.indexOf('Start', 0);
@@ -869,11 +900,55 @@
             return "https://js.arcgis.com/4.13/esri/themes/base/images/maneuvers/sharp-right.png";
           } else {
             return "./assets/direction-maneuvers/Unknown_Manuver24.svg";
-          }
+          }//??not all
 
-          // if (text.includes('turn left')) {
-            // console.log('turn left')
-          // }
+        }
+
+        var direction_div = document.createElement("div");
+        direction_div.classList = "esri-widget esri-widget--panel esri-directions__scroller direction-div";
+        direction_div.id = "direction_div";
+        var direction_section = document.createElement("section");
+        direction_section.classList = "esri-directions__maneuver-section";
+        var direction_button = document.createElement("div");
+        direction_button.classList = "button-stairs-elevator";
+        direction_button.id = "direction_button";
+        var button_a = document.createElement("a");
+        button_a.classList = "waves-effect waves-light btn-small small-padding";
+        button_a.id = "button_stairs_elev";
+        var button_img = document.createElement("img");
+        button_img.classList = "esri-directions__maneuver-icon";
+        button_img.src = "./assets/direction-maneuvers/Stairs24.svg";
+        button_img.id = "button_img";
+        // Display the directions
+        var section_ol = document.createElement("ol");
+        section_ol.classList = "esri-directions__maneuver-list";
+        section_ol.style.marginTop = 0;
+        section_ol.style.paddingTop = "15px";
+        direction_div.appendChild(direction_button);
+        direction_div.appendChild(direction_section);
+        direction_button.appendChild(button_a);
+        button_a.appendChild(button_img);
+        button_a.innerHTML = "Хочу по лифту!";
+        direction_section.appendChild(section_ol);
+        
+        direction_button.onclick = function () {
+          if (route_task == "stairs") {
+            route_task = "elevator";
+            console.log('route = stairs and change', route_task)
+            getRoute();
+            let stairs_elev_a = document.getElementById('button_stairs_elev');
+            let img = document.getElementById('button_img');
+            stairs_elev_a.innerHTML = "Хочу по лестнице!";
+            // img.src = "./assets/direction-maneuvers/Stairs24.svg";
+          } else if (route_task == "elevator") {
+            route_task = "stairs";
+            console.log('route = elevator and change', route_task)
+            getRoute();
+            let stairs_elev_a = document.getElementById('button_stairs_elev');
+            let img = document.getElementById('button_img');
+            stairs_elev_a.innerHTML = "Хочу по лифту!";
+            // img.src = "./assets/direction-maneuvers/Elevator24.svg";
+          }
         }
 
         // var checkStairsElev = 'stairs';
@@ -942,7 +1017,7 @@
         <ul id="search_ul" class="collection"></ul>
         <label id="search_label" for="search_input">Поиск</label>
       </div>
-      <div id="search_button" class="search-button">
+      <div id="search_button" class="button">
         <a class="waves-effect waves-light btn-small small-padding">
           <i class="material-icons left small-margin">search</i>
           Найти
