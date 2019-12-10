@@ -107,6 +107,9 @@
       .button-stairs-elevator {
         display: inline-block;
       }
+      .dir-name {
+        text-align: center;
+      }
       /* .direction-div {
         display: none;
       } */
@@ -658,7 +661,7 @@
         
         // get query results
         const getResultsEnd = (response) => {
-          console.log("features = ", response.features);
+          // console.log("features = ", response.features);
           let features = response.features;
           let length = features.length;
           let centroid = features[0].geometry.centroid;
@@ -723,7 +726,7 @@
           view.graphics.removeAll();//??
           addGraphic("start", start_point);//??
 
-          console.log(lat, long)
+          // console.log(lat, long)
           finish_point = {
             type: "point",
             latitude: lat,
@@ -757,10 +760,6 @@
         var route_task = "stairs";
         // get route
         const getRoute = () => {
-          console.log(view.graphics)
-            console.log('route', route_task)
-          // let dir_div = document.getElementById("direction_div");
-          // dir_div.classList.remove('open');
           section_ol.innerHTML = "";
           view.graphics.removeAll();
           addGraphic("start", start_point);
@@ -774,10 +773,8 @@
             returnDirections: true
           });
           if (route_task == "stairs") {
-            console.log('to stairs')
             // Get the route
             routeTaskStairs.solve(routeParams).then((data) => {
-              // console.log('data', data.routeResults[0].directions.features)
               // Display the route
               addSymbol(data.routeResults);
 
@@ -787,13 +784,8 @@
 
             });
             view.ui.add(direction_div, "top-right");
-            // console.log(direction_div)
-            // let dir_div = document.getElementById("direction_div");
-            // dir_div.classList.add('open');
           } else if (route_task == "elevator") {
-            console.log('to elevator')
             routeTaskElev.solve(routeParams).then((data) => {
-              // console.log('data', data.routeResults[0].directions.features)
               // Display the route
               addSymbol(data.routeResults);
 
@@ -803,12 +795,10 @@
               
             })
             view.ui.add(direction_div, "top-right");
-            // console.log(direction_div)
-            // let dir_div = document.getElementById("direction_div");
-            // dir_div.classList.add('open');
           }
         }
 
+        // add symbol to results
         const addSymbol = (route_result) => {
           route_result.forEach((result) => {
             result.route.symbol = {
@@ -820,6 +810,7 @@
           });
         }
 
+        // create route list
         const addRouteList = (features) => {
           features.forEach((result, i) => {
             let section_li = document.createElement("li");
@@ -843,7 +834,7 @@
             let div32 = document.createElement("div");
             div32.classList = "esri-directions__cost--intermediate";
             div32.setAttribute("title", "Расстояние");
-            div32.innerHTML = result.attributes.length + " meters";
+            div32.innerHTML = result.attributes.length.toFixed(1) + " meters";
 
             div2.appendChild(div31);
             div2.appendChild(div32);
@@ -857,9 +848,6 @@
 
         // add image for direction list
         const addImg = (text) => {
-          // console.log(text)
-          // let start = text.indexOf('Start', 0);
-          // console.log(asd)
           if (text.indexOf("Start", 0) == 0) {
             return "./assets/direction-maneuvers/Start24.svg";
           } else if (text.indexOf("Finish", 0) == 0) {
@@ -895,18 +883,37 @@
           } else if (text.indexOf("Bear right", 0) == 0) {//??
             return "https://js.arcgis.com/4.13/esri/themes/base/images/maneuvers/straight.png";
           } else if (text.indexOf("Make sharp left", 0) == 0) {
-            return "https://js.arcgis.com/4.13/esri/themes/base/images/maneuvers/sharp-left.png";
+            if (text.includes("immediately turn right")) {
+              return "https://js.arcgis.com/4.13/esri/themes/base/images/maneuvers/left-right.png";
+            } else if (text.includes("immediately turn left")) {
+              return "https://js.arcgis.com/4.13/esri/themes/base/images/maneuvers/left-left.png";
+            } else {
+              return "https://js.arcgis.com/4.13/esri/themes/base/images/maneuvers/sharp-left.png";
+            }
           } else if (text.indexOf("Make sharp right", 0) == 0) {
-            return "https://js.arcgis.com/4.13/esri/themes/base/images/maneuvers/sharp-right.png";
+            if (text.includes("immediately turn right")) {
+              return "https://js.arcgis.com/4.13/esri/themes/base/images/maneuvers/right-right.png";
+            } else if (text.includes("immediately turn left")) {
+              return "https://js.arcgis.com/4.13/esri/themes/base/images/maneuvers/right-left.png";
+            } else {
+              return "https://js.arcgis.com/4.13/esri/themes/base/images/maneuvers/sharp-right.png";
+            }
           } else {
             return "./assets/direction-maneuvers/Unknown_Manuver24.svg";
           }//??not all
 
         }
 
+        // Display the directions
         var direction_div = document.createElement("div");
         direction_div.classList = "esri-widget esri-widget--panel esri-directions__scroller direction-div";
         direction_div.id = "direction_div";
+        var direction_div_title = document.createElement("div");
+        var title_name = document.createElement("h6");
+        direction_name.classList = "dir-name";
+        direction_name.innerHTML = "Маршрутный лист";
+        var direction_divider = document.createElement("div");
+        direction_divider.classList = "divider";
         var direction_section = document.createElement("section");
         direction_section.classList = "esri-directions__maneuver-section";
         var direction_button = document.createElement("div");
@@ -915,96 +922,33 @@
         var button_a = document.createElement("a");
         button_a.classList = "waves-effect waves-light btn-small small-padding";
         button_a.id = "button_stairs_elev";
-        var button_img = document.createElement("img");
-        button_img.classList = "esri-directions__maneuver-icon";
-        button_img.src = "./assets/direction-maneuvers/Stairs24.svg";
-        button_img.id = "button_img";
-        // Display the directions
         var section_ol = document.createElement("ol");
         section_ol.classList = "esri-directions__maneuver-list";
         section_ol.style.marginTop = 0;
         section_ol.style.paddingTop = "15px";
+        direction_div_title.appendChild(title_name);
+        direction_div.appendChild(direction_div_title);
         direction_div.appendChild(direction_button);
+        direction_div.appendChild(direction_divider);
         direction_div.appendChild(direction_section);
         direction_button.appendChild(button_a);
-        button_a.appendChild(button_img);
         button_a.innerHTML = "Хочу по лифту!";
         direction_section.appendChild(section_ol);
         
+        // change route list(stairs/elevator)
         direction_button.onclick = function () {
           if (route_task == "stairs") {
             route_task = "elevator";
-            console.log('route = stairs and change', route_task)
             getRoute();
             let stairs_elev_a = document.getElementById('button_stairs_elev');
-            let img = document.getElementById('button_img');
             stairs_elev_a.innerHTML = "Хочу по лестнице!";
-            // img.src = "./assets/direction-maneuvers/Stairs24.svg";
           } else if (route_task == "elevator") {
             route_task = "stairs";
-            console.log('route = elevator and change', route_task)
             getRoute();
             let stairs_elev_a = document.getElementById('button_stairs_elev');
-            let img = document.getElementById('button_img');
             stairs_elev_a.innerHTML = "Хочу по лифту!";
-            // img.src = "./assets/direction-maneuvers/Elevator24.svg";
           }
         }
-
-        // var checkStairsElev = 'stairs';
-        // var change_dir1 = document.createElement("div");
-        // var change_dir2 = document.createElement("div");
-        // var a1 = document.createElement("a");
-        // var a2 = document.createElement("a");
-        // var i1 = document.createElement("i");
-        // var i2 = document.createElement("i");
-        // a1.classList = "waves-effect waves-light btn-small small-padding";
-        // a2.classList = "waves-effect waves-light btn-small small-padding";
-        // i1.classList = "material-icons left small-margin";
-        // i2.classList = "material-icons left small-margin";
-        // i1.innerHTML = "search";
-        // i2.innerHTML = "search";
-        // change_dir1.id = "stairs";
-        // change_dir1.classList = "esri-widget esri-widget--panel search-button";
-        // change_dir1.style.marginTop = 0;
-        // change_dir1.style.paddingTop = "15px";
-        // change_dir2.id = "elevator";
-        // change_dir2.classList = "esri-widget esri-widget--panel search-button";
-        // change_dir2.style.marginTop = 0;
-        // change_dir2.style.paddingTop = "15px";
-        // a1.appendChild(i1);
-        // a1.innerHTML = "Хочу на лифте!";
-        // change_dir1.appendChild(a1);
-        // a2.appendChild(i2);
-        // a2.innerHTML = "Нет, хочу на лестнице!";
-        // change_dir2.appendChild(a2);
-        // change_dir1.onClick = function () {
-        //   checkStairsElev = 'elev'
-        //   routeTask.url = elevator_url;
-        //   getRoute();
-        // }
-        // change_dir2.onClick = function () {
-        //   checkStairsElev = 'stairs'
-        //   routeTask.url = stairs_url;
-        //   getRoute();
-        // }
-
-        // let stars_div = document.querySelector("#stairs");
-        // if (stars_div) {
-        //   stars_div.addEventListener('click', () => {
-        //     checkStairsElev = 'elev';
-        //     routeTask.url = elevator_url;
-        //     getRoute();
-        //   })
-        // }
-        // let elev_div = document.querySelector("#elevator");
-        // if (elev_div) {
-        //   elev_div.addEventListener('click', () => {
-        //     checkStairsElev = 'elev';
-        //     routeTask.url = elevator_url;
-        //     getRoute();
-        //   })
-        // }
       });
     </script>
   </head>
