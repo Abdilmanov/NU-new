@@ -106,9 +106,32 @@
       }
       .button-stairs-elevator {
         display: inline-block;
+        margin: 0 15px 15px 15px;
       }
       .dir-name {
-        text-align: center;
+        font-size: 18px;
+        padding: 10px!important;
+      }
+      .close {
+        color: #777;
+        font: 14px/100% arial, sans-serif;
+        /* position: absolute; */
+        text-decoration: none;
+        text-shadow: 0 1px 0 #fff;
+        padding: 10px!important;
+      }
+      .close:hover {
+        opacity: 1;
+        cursor: pointer;
+      }
+      .close:after {
+        content: 'X';
+      }
+      .border-bottom {
+        border-bottom: 1px solid #e0e0e0;
+      }
+      .title {
+        margin-bottom: 15px!important;
       }
       /* .direction-div {
         display: none;
@@ -491,21 +514,32 @@
 
         };
 
+        var block_search = false;
         // query for dropdown list
         const doQuery = (value) => {
           // console.log("doQuery");
-          let qTask = new QueryTask({
-            url: `https://kas.nu.edu.kz/arcgis/rest/services/CampusMap2d_MIL1/MapServer/3`
-          });
-          
+          let params = new Query();
+
           let sqlTxt = checkValue(value);
-          
-          let params = new Query({
-            where: sqlTxt
-          });
-          params.outFields = ["block, nameroom, roomnum"];
+          console.log(sqlTxt)
+          params.where = sqlTxt;
+          if (!block_search) {
+            params.outFields = ["block, nameroom, roomnum"];
+          } else {
+            params.outFields = ["block"];
+          }
           params.returnGeometry = false;
           params.returnDistinctValues = true;
+
+          if (!block_search) {
+            var qTask = new QueryTask({
+              url: `https://kas.nu.edu.kz/arcgis/rest/services/CampusMap2d_MIL1/MapServer/3`
+            });
+          } else {
+            var qTask = new QueryTask({
+              url: `https://kas.nu.edu.kz/arcgis/rest/services/CampusMap2d_MIL1/MapServer/52`
+            });
+          }
           qTask
             .execute(params)
             .then(getResultsSelf)
@@ -528,7 +562,7 @@
             let active_element = document.activeElement.id;
             search_ul.appendChild(li);
             search_ul.classList.add("activeUl");
-          } else {
+          } else if (!block_search) {
             let index1 = 0;
             let index2 = 0;
             let len = 6;
@@ -586,6 +620,34 @@
               search_ul.classList.add("activeUl");
             }
             // getForSelf(response.features);
+          } else if (block_search) {
+            let index1 = 0;
+            let index2 = 0;
+            let len = 6;
+            clearDropdownSelf();
+            while (index1 < len) {
+              // console.log('index2 = ',index2)
+              if (index2 == length) {
+                // console.log("index2==length");
+                break;
+              }
+              // Проверяем заполнен ли атрибут и повторяется ли
+              if (features[index2].attributes.block != null) {
+                if (checkIdentical(features[index2].attributes.block)) {
+                  let li = document.createElement("li");
+                  li.setAttribute("id", features[index2].attributes.block);
+                  li.setAttribute("class", "collection-item");
+                  li.innerHTML = features[index2].attributes.block;
+                  dropdownListB.push(features[index2].attributes.block);
+                  search_ul.appendChild(li);
+                  index1++;
+                }
+                index2++;
+              }
+              if (index1 > 0) {
+                search_ul.classList.add("activeUl");
+              }
+            }
           }
         };
         // Вызывается каждый раз, когда запрос отклоняется
@@ -593,13 +655,38 @@
           console.error("Promise rejected: ", error.message);
         };
         
+        const checkIdentical = (block) => {
+          dropdownListB.forEach(el => {
+            if (el != block) {
+              return false;
+            }
+          })
+          return true;
+        }
+
         // checks which sql text to return
         const checkValue = (value) => {
           let text = '';
-          if (/[0-9]/.test(value)) {
+          // let value = value.toString();
+          if (value.toLowerCase().includes("б") || value.toLowerCase().includes("blo")) {
+            if (value.toLowerCase().includes("blo")) {
+              console.log('blo')
+              if (value.includes("b") || value.includes("B")) value = value.toLowerCase().replace("b","Б")
+              if (value.includes("l")) value = value.replace("l","л")
+              if (value.includes("o")) value = value.replace("o","о")
+              if (value.includes("c")) value = value.replace("c","")
+              if (value.includes("ck")) value = value.replace("ck","к")
+              text = "block" + " LIKE '%" + value + "%'";
+            } else {
+              text = "block" + " LIKE '%" + value + "%'";
+            }
+            block_search = true;
+          } else if (/[0-9]/.test(value)) {
             text = "lower(roomnum)" + " LIKE '%" + value + "%'";
+            block_search = false;
           } else {
             text = "lower(nameroom)" + " LIKE '%" + value + "%'";
+            block_search = false;
           }
           // console.log(text);
           return text;
@@ -641,18 +728,30 @@
         // query after click to dropdown list
         const doQueryResult = () => {
           // console.log("doQuery");
-          let qTask = new QueryTask({
-            url: `https://kas.nu.edu.kz/arcgis/rest/services/CampusMap2d_MIL1/MapServer/3`
-          });
-
           let sqlTxt = findSqlText();
-          // console.log(sqlTxt)
+          console.log(sqlTxt)
           let params = new Query({
             where: sqlTxt
           });
-          params.outFields = ["block, nameroom, roomnum, floor"];
+          if (!block_search) {
+            params.outFields = ["block, nameroom, roomnum, floor"];
+          } else {
+            params.outFields = ["block"];
+          }
+          
           params.returnGeometry = true;
           params.returnDistinctValues = false;
+
+          if (!block_search) {
+            var qTask = new QueryTask({
+              url: `https://kas.nu.edu.kz/arcgis/rest/services/CampusMap2d_MIL1/MapServer/3`
+            });
+          } else {
+            var qTask = new QueryTask({
+              url: `https://kas.nu.edu.kz/arcgis/rest/services/CampusMap2d_MIL1/MapServer/52`
+            });
+          }
+
           qTask
             .execute(params)
             .then(getResultsEnd)
@@ -661,34 +760,43 @@
         
         // get query results
         const getResultsEnd = (response) => {
-          // console.log("features = ", response.features);
+          console.log("features = ", response.features);
           let features = response.features;
           let length = features.length;
           let centroid = features[0].geometry.centroid;
 
-          if (length == 1) {
-            features[0].popupTemplate = {
-              title: "Информация",
-              content: 
-              "<b>Кабинет: </b> " + features[0].attributes.roomnum + " (" + features[0].attributes.nameroom + ")</br>"+
-              "<b>Блок: </b> " + features[0].attributes.block + "</br>"+
-              "<b>Этаж: </b> " + features[0].attributes.floor + "</br>"+
-              "</br>"+
-              "<a class='waves-effect waves-light btn-small small-padding'"+
-              "onClick='createDirection(" + centroid.latitude + "," + centroid.longitude + ")' style='color: white!important;'>"+
-              "<i class='material-icons left medium-margin'>transfer_within_a_station</i>Построить маршрут</a></br>"
-              
-            }
-            features[0].symbol = {
-              type: "simple-fill",  // autocasts as new SimpleFillSymbol()
-              color: 'green',
-              style: "solid",
-              outline: {  // autocasts as new SimpleLineSymbol()
-                color: "green",
-                width: 1
+          // if (length == 1) {
+            let feature = features.forEach(features => {
+              if (!block_search) {
+                features.popupTemplate = {
+                  title: "Информация",
+                  content: 
+                  "<b>Кабинет: </b> " + features.attributes.roomnum + " (" + features.attributes.nameroom + ")</br>"+
+                  "<b>Блок: </b> " + features.attributes.block + "</br>"+
+                  "<b>Этаж: </b> " + features.attributes.floor + "</br>"+
+                  "</br>"+
+                  "<a class='waves-effect waves-light btn-small small-padding'"+
+                  "onClick='createDirection(" + features.geometry.centroid.latitude + "," + features.geometry.centroid.longitude + ")' style='color: white!important;'>"+
+                  "<i class='material-icons left medium-margin'>transfer_within_a_station</i>Построить маршрут</a></br>"
+                  
+                }
+              } else {
+                features.popupTemplate = {
+                  title: "Информация",
+                  content: "<b>Блок: </b> " + features.attributes.block + "</br>"
+                }
               }
-            };
-            graphic_layer.add(features[0]);
+              features.symbol = {
+                type: "simple-fill",  // autocasts as new SimpleFillSymbol()
+                color: 'green',
+                style: "solid",
+                outline: {  // autocasts as new SimpleLineSymbol()
+                  color: "green",
+                  width: 1
+                }
+              };
+              graphic_layer.add(features);
+            })
             view.goTo(features[0].geometry);
             view.popup.open({
               features: features,
@@ -696,7 +804,7 @@
               updateLocationEnabled: true
             });
             // pulseAnimation(false);
-          }
+          // }
 
         };
 
@@ -706,16 +814,28 @@
           // console.log(dropdownListN)
           // console.log(dropdownListB)
           let text = '';
-          length = dropdownListR.length;
-          len = 0;
-          while (len < length) {
-            if (search_input.value == dropdownListR[len]) {
-              text = "roomnum = '" + dropdownListR[len] + "'";
-              if (dropdownListN[len]) text += " AND nameroom = '" + dropdownListN[len] + "'";
-              if (dropdownListB[len]) text += " AND block = '" + dropdownListB[len] + "'";
-              break;
+          if (!block_search) {
+            length = dropdownListR.length;
+            len = 0;
+            while (len < length) {
+              if (search_input.value == dropdownListR[len]) {
+                text = "roomnum = '" + dropdownListR[len] + "'";
+                if (dropdownListN[len]) text += " AND nameroom = '" + dropdownListN[len] + "'";
+                if (dropdownListB[len]) text += " AND block = '" + dropdownListB[len] + "'";
+                break;
+              }
+              len++;
             }
-            len++;
+          } else {
+            length = dropdownListB.length;
+            len = 0;
+            while (len < length) {
+              if (search_input.value == dropdownListB[len]) {
+                text = "block = '" + dropdownListB[len] + "'";
+                break;
+              }
+              len++;
+            }
           }
           return text;
         }
@@ -757,7 +877,7 @@
             view.graphics.add(graphic);
         }
         
-        var route_task = "stairs";
+        var route_task = "elevator";
         // get route
         const getRoute = () => {
           section_ol.innerHTML = "";
@@ -909,9 +1029,12 @@
         direction_div.classList = "esri-widget esri-widget--panel esri-directions__scroller direction-div";
         direction_div.id = "direction_div";
         var direction_div_title = document.createElement("div");
-        var title_name = document.createElement("h6");
-        direction_name.classList = "dir-name";
-        direction_name.innerHTML = "Маршрутный лист";
+        direction_div_title.classList = "row border-bottom title";
+        var title_name = document.createElement("div");
+        title_name.classList = "col s11 dir-name";
+        title_name.innerHTML = "Маршрутный лист";
+        var close_a = document.createElement("a");
+        close_a.classList = "col s1 close";
         var direction_divider = document.createElement("div");
         direction_divider.classList = "divider";
         var direction_section = document.createElement("section");
@@ -919,36 +1042,64 @@
         var direction_button = document.createElement("div");
         direction_button.classList = "button-stairs-elevator";
         direction_button.id = "direction_button";
-        var button_a = document.createElement("a");
-        button_a.classList = "waves-effect waves-light btn-small small-padding";
-        button_a.id = "button_stairs_elev";
+        var switches = document.createElement("div");
+        switches.classList = "switch";
+        var switches_label = document.createElement("label");
+        var label_input = document.createElement("input");
+        label_input.type = "checkbox";
+        var label_span = document.createElement("span");
+        label_span.classList = "lever";
+        var elev_text = "Лифт";
+        var stairs_text = "Лестница";
+        direction_button.appendChild(switches);
+        switches.appendChild(switches_label);
+        switches_label.appendChild(label_input);
+        switches_label.appendChild(label_span);
+        label_input.before(elev_text);
+        label_span.after(stairs_text);
+        // var button_a = document.createElement("a");
+        // button_a.classList = "waves-effect waves-light btn-small small-padding";
+        // button_a.id = "button_stairs_elev";
         var section_ol = document.createElement("ol");
         section_ol.classList = "esri-directions__maneuver-list";
         section_ol.style.marginTop = 0;
         section_ol.style.paddingTop = "15px";
         direction_div_title.appendChild(title_name);
         direction_div.appendChild(direction_div_title);
+        direction_div_title.appendChild(close_a);
         direction_div.appendChild(direction_button);
         direction_div.appendChild(direction_divider);
         direction_div.appendChild(direction_section);
-        direction_button.appendChild(button_a);
-        button_a.innerHTML = "Хочу по лифту!";
+        // direction_button.appendChild(button_a);
+        // button_a.innerHTML = "Хочу по лестнице!";
         direction_section.appendChild(section_ol);
         
         // change route list(stairs/elevator)
-        direction_button.onclick = function () {
+        label_input.onchange = () => {
           if (route_task == "stairs") {
             route_task = "elevator";
             getRoute();
-            let stairs_elev_a = document.getElementById('button_stairs_elev');
-            stairs_elev_a.innerHTML = "Хочу по лестнице!";
+            return;
+            // let stairs_elev_a = document.getElementById('button_stairs_elev');
+            // stairs_elev_a.innerHTML = "Хочу по лестнице!";
           } else if (route_task == "elevator") {
             route_task = "stairs";
             getRoute();
-            let stairs_elev_a = document.getElementById('button_stairs_elev');
-            stairs_elev_a.innerHTML = "Хочу по лифту!";
+            return;
+            // let stairs_elev_a = document.getElementById('button_stairs_elev');
+            // stairs_elev_a.innerHTML = "Хочу по лифту!";
           }
         }
+
+        // close all graphics && route list
+        close_a.onclick = () => {
+          graphic_layer.removeAll();
+          view.popup.close();
+          view.graphics.removeAll();//??
+          addGraphic("start", start_point);//??
+          view.ui.empty("top-right");
+        }
+
       });
     </script>
   </head>
