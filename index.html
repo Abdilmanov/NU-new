@@ -426,18 +426,31 @@
           return finish_point;
         }
 
+        search_input.oninput = (event) => {
+          CloseDropdown();
+          clearUlListSelf();
+          let value = event.srcElement.value;
+          console.log(value)
+          if (!value == "") {
+            doQuery(value);
+          } else {
+            console.log("input is empty");
+          }
+        }
+        //input.addEventListener('input', updateValue);
+
         // keypress
-        search_input.addEventListener("keypress", function(e) {
-          keyPress(e);
-        });
-        // keydown
-        search_input.addEventListener("keydown", function(e) {
-          keyDown(e);
-        });
-        // paste
-        search_input.addEventListener("paste", function(e) {
-          paste(e);
-        });
+        // search_input.addEventListener("keypress", function(e) {
+        //   keyPress(e);
+        // });
+        // // keydown
+        // search_input.addEventListener("keydown", function(e) {
+        //   keyDown(e);
+        // });
+        // // paste
+        // search_input.addEventListener("paste", function(e) {
+        //   paste(e);
+        // });
         const keyPress = (e) => {
           var code = e.charCode || e.keyCode || e.which;
           // Check for tab and arrow keys (needed in Firefox)
@@ -866,15 +879,27 @@
 
         // add start/finish point
         const addGraphic = (type, point) => {
-            var graphic = new Graphic({
-            symbol: {
-                type: "simple-marker",
-                color: (type === "start") ? "white" : "black",
-                size: "8px"
+          var graphic = new Graphic();
+          if (type == "start") {
+            graphic.symbol = {
+              type: "picture-marker",
+              url:
+                "./assets/direction-maneuvers/Start24.svg",
+              width: 46,
+              height: 46
             },
-            geometry: point
-            });
-            view.graphics.add(graphic);
+            graphic.geometry = point;
+          } else if (type == "finish") {
+            graphic.symbol = {
+              type: "picture-marker",
+              url:
+                "./assets/direction-maneuvers/End24.svg",
+              width: 46,
+              height: 46
+            },
+            graphic.geometry = point;
+          }
+          view.graphics.add(graphic);
         }
         
         var route_task = "elevator";
