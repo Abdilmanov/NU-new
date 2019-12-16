@@ -225,7 +225,7 @@
           scale: 4000,
           constraints: {
             minScale: 8000,
-            // maxScale: 2000,
+            maxScale: 2000,
           }
         });
         
@@ -277,6 +277,8 @@
         // add Graphic
         var graphic_layer = new GraphicsLayer();
         map.add(graphic_layer);
+        var route_graphic = new GraphicsLayer();
+        map.add(route_graphic);
 
         const search = document.getElementById('search');
         const search_input = document.getElementById('search_input');
@@ -345,6 +347,7 @@
                 document.querySelector("#search_input").focus();
                 search_input.value = text_li;
                 graphic_layer.removeAll();
+                route_graphic.removeAll();
                 doQueryResult();
                 // pulseAnimation(true);
                 CloseDropdown();
@@ -840,7 +843,11 @@
               };
               graphic_layer.add(features);
             })
-            view.goTo(features[0].geometry);
+            console.log(features[0].geometry)
+            view.goTo({
+              target: features[0].geometry,
+              scale: 2000
+            });
             view.popup.open({
               features: features,
               featureMenuOpen: true,
@@ -886,7 +893,9 @@
         var finish_point;
         window.createDirection = (lat, long) => {
           view.popup.close();
-          view.graphics.removeAll();//??
+          // view.graphics.removeAll();//??
+          // graphic_layer.removeAll();
+          // route_graphic.removeAll();
           addGraphic("start", start_point);//??
 
           // console.log(lat, long)
@@ -940,7 +949,9 @@
         // get route
         const getRoute = () => {
           section_ol.innerHTML = "";
-          view.graphics.removeAll();
+          // view.graphics.removeAll();
+          // graphic_layer.removeAll();
+          // route_graphic.removeAll();
           addGraphic("start", start_point);
           addGraphic("finish", checkFinishPoint(finish_point));
           view.ui.empty("top-right");
@@ -966,7 +977,7 @@
             view.ui.add(direction_div, "top-right");
           } else if (route_task == "elevator") {
             routeTaskElev.solve(routeParams).then((data) => {
-              console.log(data)
+              // console.log(data)
               // Display the route
               addSymbol(data.routeResults);
 
@@ -977,12 +988,23 @@
               // })
               var parcelExtent = data.routeResults[0].directions.mergedGeometry.clone();
               
-              // view.goTo(parcelExtent);
-              view.goTo(direction_extent);
+              // let extent_route_graphic = route_graphic;
+              route_graphic.graphics.items[0].geometry.spatialReference.wkid = 4326;
+              route_graphic.graphics.items[0].geometry.spatialReference.latestWkid = 4326;
+              console.log(route_graphic);
+              // view.extent = route_graphic.graphics.items[0].geometry.extent;
+              // view.goTo({
+              //   target: route_graphic.graphics.items[0].geometry.extent,
+              //   scale: 2000,
+              //   // zoom: 15
+              // },{
+              //   // duration: 2000,
+              //   // easing: "ease-in"
+              // });
+              // console.log(features)
               console.log(view)
-              console.log(direction_extent)
               addRouteList(features);
-              
+
             })
             view.ui.add(direction_div, "top-right");
           }
@@ -992,11 +1014,11 @@
         const addSymbol = (route_result) => {
           route_result.forEach((result) => {
             result.route.symbol = {
-            type: "simple-line",
-            color: [38, 166, 149],
-            width: 3
+              type: "simple-line",
+              color: [38, 166, 149],
+              width: 3
             };
-            view.graphics.add(result.route);
+            route_graphic.add(result.route);
           });
         }
 
@@ -1164,8 +1186,9 @@
         // close all graphics && route list
         close_a.onclick = () => {
           graphic_layer.removeAll();
+          route_graphic.removeAll();
           view.popup.close();
-          view.graphics.removeAll();//??
+          // view.graphics.removeAll();//??
           addGraphic("start", start_point);//??
           view.ui.empty("top-right");
         }
