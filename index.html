@@ -183,7 +183,10 @@
         "esri/tasks/support/RouteParameters",
         "esri/tasks/support/FeatureSet",
         // ** Layers**
-        "esri/layers/FeatureLayer"
+        "esri/layers/FeatureLayer",
+
+        "esri/core/watchUtils",
+        "esri/geometry/Geometry"
       ], function(
         // **Map**
         Map,
@@ -202,21 +205,30 @@
         RouteParameters, 
         FeatureSet,
         // **Layers**
-        FeatureLayer
+        FeatureLayer,
+
+        watchUtils,
+        Geometry
       ) {
         // **Map**
         var map = new Map({
           // basemap: "topo-vector"
         });
-
+        var defaultViewCenter = {
+          center: [71.397117, 51.090505]
+        }
         // var view = new SceneView({
         var view = new MapView({
           container: "viewDiv",
           map: map,
           center: [71.397117, 51.090505],
-          scale: "4000"
+          scale: 4000,
+          constraints: {
+            minScale: 8000,
+            // maxScale: 2000,
+          }
         });
-
+        
         // **Layers**
         let anotherInfo = [
           {
@@ -361,6 +373,26 @@
           // **Direction**
           
           addGraphic("start", start_point);
+          
+          // var left_xmin = 7943853.67;
+          // var left_xmax = 7947928.01;
+          // var right_xmin = 7947688.98;
+          // var right_xmax = 7951763.32;
+          // var top_ymin = ;
+          // var bottom_ymax = ;
+          // Watch view's extent property changed.
+          watchUtils.watch(view, "extent", function() {
+            // Get the new extent of the view only when view crossed the border.
+            if (view.extent) {
+              if ((view.extent.xmin < 7943853.67 && view.extent.xmax < 7947928.01)//left
+              || (view.extent.ymin > 6637894.10 && view.extent.ymax > 6640244.22)//top
+              || (view.extent.xmin > 7947688.98 && view.extent.xmax > 7951763.32)//right
+              || (view.extent.ymin < 6634698.94 && view.extent.ymax < 6637126.94)) //bottom
+              {
+                  view.goTo(defaultViewCenter.center);
+              }
+            }
+          });
 
           // view.on("click", function(event) {
           //   if (view.graphics.length === 1) {
@@ -426,11 +458,11 @@
           return finish_point;
         }
 
+        // when input changed
         search_input.oninput = (event) => {
           CloseDropdown();
           clearUlListSelf();
           let value = event.srcElement.value;
-          console.log(value)
           if (!value == "") {
             doQuery(value);
           } else {
@@ -438,7 +470,7 @@
           }
         }
         //input.addEventListener('input', updateValue);
-
+        
         // keypress
         // search_input.addEventListener("keypress", function(e) {
         //   keyPress(e);
@@ -534,7 +566,6 @@
           let params = new Query();
 
           let sqlTxt = checkValue(value);
-          console.log(sqlTxt)
           params.where = sqlTxt;
           if (!block_search) {
             params.outFields = ["block, nameroom, roomnum"];
@@ -742,7 +773,6 @@
         const doQueryResult = () => {
           // console.log("doQuery");
           let sqlTxt = findSqlText();
-          console.log(sqlTxt)
           let params = new Query({
             where: sqlTxt
           });
@@ -906,6 +936,7 @@
         }
         
         var route_task = "elevator";
+        // var direction_extent = new Geometry();// route directions extent
         // get route
         const getRoute = () => {
           section_ol.innerHTML = "";
@@ -928,17 +959,28 @@
 
               // Show the direction list
               let features = data.routeResults[0].directions.features;
+              
               addRouteList(features);
 
             });
             view.ui.add(direction_div, "top-right");
           } else if (route_task == "elevator") {
             routeTaskElev.solve(routeParams).then((data) => {
+              console.log(data)
               // Display the route
               addSymbol(data.routeResults);
 
               // Show the direction list
               let features = data.routeResults[0].directions.features;
+              // let direction_extent = new Geometry({
+                let direction_extent = data.routeResults[0].directions.extent.clone();
+              // })
+              var parcelExtent = data.routeResults[0].directions.mergedGeometry.clone();
+              
+              // view.goTo(parcelExtent);
+              view.goTo(direction_extent);
+              console.log(view)
+              console.log(direction_extent)
               addRouteList(features);
               
             })
