@@ -1151,12 +1151,15 @@
             view.goTo({
               target: features[0].geometry,
               scale: 500
-            });
-            // view.popup.open({
-            //   features: features,
-            //   featureMenuOpen: true,
-            //   updateLocationEnabled: true
-            // });
+            }).then(openPopup);
+            
+            function openPopup(info) {
+              view.popup.open({
+                features: features,
+                featureMenuOpen: true,
+                updateLocationEnabled: true
+              })
+            }
             // pulseAnimation(false);
           // }
 
