@@ -133,6 +133,32 @@
       .title {
         margin-bottom: 15px!important;
       }
+
+      .floorBlockInfo {
+        max-height: 150px;
+        overflow-y: auto;
+        background-color: white;
+      }
+      .li-floorBlockInfo {
+        text-align: center;
+        height: 30px;
+        width: 30px;
+        font-size: 16px;
+        padding: 5px;
+        list-style-type: none;
+        border-top: 1px solid #d4d4d4;
+      }
+      .li-floorBlockInfo:hover {
+        background-color: #f0f0f0;
+        cursor: pointer;
+      }
+      .li-floorBlockInfo:active {
+        background-color: #f0f0f0;
+      }
+      .li-floorBlockInfo:visited {
+        background-color: #f0f0f0;
+      }
+
       /* .direction-div {
         display: none;
       } */
@@ -186,7 +212,11 @@
         "esri/layers/FeatureLayer",
 
         "esri/core/watchUtils",
-        "esri/geometry/Geometry"
+        "esri/geometry/Geometry",
+        "esri/geometry/Extent",
+        // "esri/tasks/Locator",
+        "esri/geometry/Point",
+        "esri/geometry/SpatialReference"
       ], function(
         // **Map**
         Map,
@@ -208,8 +238,13 @@
         FeatureLayer,
 
         watchUtils,
-        Geometry
+        Geometry,
+        Extent,
+        // Locator,
+        Point,
+        SpatialReference
       ) {
+        
         // **Map**
         var map = new Map({
           // basemap: "topo-vector"
@@ -225,78 +260,326 @@
           scale: 4000,
           constraints: {
             minScale: 8000,
-            maxScale: 2000,
+            maxScale: 500,
           }
         });
         
+        var floorDiv = document.getElementById('floorBlockInfo');
+        var search = document.getElementById('search');
+        var search_input = document.getElementById('search_input');
+        var search_menu = document.getElementById('search_menu');
+        var search_ul = document.getElementById('search_ul');
+        var search_button = document.getElementById('search_button');
+
         // **Layers**
         let anotherInfo = [
           {
-            layer_id: 0,
+            id: 0,
             title: "Наименование блоков"
           },
           {
-            layer_id: 47,
+            id: 47,
             title: "Ограждение"
           },
           {
-            layer_id: 48,
+            id: 48,
             title: "Дороги"
           },
           {
-            layer_id: 50,
+            id: 50,
             title: "Газоны"
           },
           {//-
-            layer_id: 51,
+            id: 51,
             title: "Клумбы"
           },
           {
-            layer_id: 52,
+            id: 52,
             title: "Здания и сооружения"
           }
         ];
 
+        let floorBlockInfo = [
+          {
+            block_id: 6,
+            floor_id: 7,
+            title: '1',
+            name: '1 этаж'
+          },
+          {
+            block_id: 9,
+            floor_id: 10,
+            title: 'M1',
+            name: 'M1 этаж'
+          },
+          {
+            block_id: 12,
+            floor_id: 13,
+            title: '2',
+            name: '2 этаж'
+          },
+          {
+            block_id: 15,
+            floor_id: 16,
+            title: 'M2',
+            name: 'M2 этаж'
+          },
+          {
+            block_id: 18,
+            floor_id: 19,
+            title: '3',
+            name: '3 этаж'
+          },
+          {
+            block_id: 21,
+            floor_id: 22,
+            title: '4',
+            name: '4 этаж'
+          },
+          {
+            block_id: 24,
+            floor_id: 25,
+            title: '5',
+            name: '5 этаж'
+          },
+          {
+            block_id: 27,
+            floor_id: 28,
+            title: '6',
+            name: '6 этаж'
+          },
+          {
+            block_id: 30,
+            floor_id: 31,
+            title: '7',
+            name: '7 этаж'
+          },
+          {
+            block_id: 33,
+            floor_id: 34,
+            title: '8',
+            name: '8 этаж'
+          },
+          {
+            block_id: 36,
+            floor_id: 37,
+            title: '9',
+            name: '9 этаж'
+          },
+          {
+            block_id: 39,
+            floor_id: 40,
+            title: '10',
+            name: '10 этаж'
+          },
+          {
+            block_id: 42,
+            floor_id: 43,
+            title: '11',
+            name: '11 этаж'
+          },
+          {
+            block_id: 45,
+            floor_id: 46,
+            title: '12',
+            name: '12 этаж'
+          },
+        ]
+
+        const addLayer = (id, title, type) => {
+          if (type == "floor") {
+            let layer = new FeatureLayer({
+              id: "floor",
+              title: title,
+              url:
+                "https://kas.nu.edu.kz/arcgis/rest/services/CampusMap2d_MIL1/MapServer/",
+              layerId: id,
+              popupTemplate: {
+                title: title,
+                content: [
+                  {
+                    type: "fields",
+                    fieldInfos: [{
+                      fieldName: "name",
+                      format: {
+                        digitSeparator: true,
+                        places: 0
+                        }
+                      },{
+                      fieldName: "floor",
+                      format: {
+                        digitSeparator: true,
+                        places: 2
+                        }
+                      },{
+                      fieldName: "h",
+                      format: {
+                        digitSeparator: true,
+                        places: 2
+                        }
+                      },{
+                      fieldName: "namefloor",
+                      format: {
+                        digitSeparator: true,
+                        places: 0
+                        }
+                    }]
+                  }
+                ]
+              }
+            });
+            map.layers.add(layer);
+          } else if (type == "room") {
+            let layer = new FeatureLayer({
+              id: "block",
+              title: title,
+              url:
+                "https://kas.nu.edu.kz/arcgis/rest/services/CampusMap2d_MIL1/MapServer/",
+              layerId: id,
+              popupTemplate: {
+                title: title,
+                content: [
+                  {
+                    type: "fields",
+                    fieldInfos: [{
+                      fieldName: "floor",
+                      format: {
+                        digitSeparator: true,
+                        places: 0
+                        }
+                      },{
+                      fieldName: "roomnum",
+                      format: {
+                        digitSeparator: true,
+                        places: 2
+                        }
+                      },{
+                      fieldName: "nameroom",
+                      format: {
+                        digitSeparator: true,
+                        places: 0
+                        }
+                    }]
+                  }
+                ]
+              }
+            });
+            map.layers.add(layer);
+          } else {
+            let layer = new FeatureLayer({
+              id: "another",
+              title: title,
+              url:
+                "https://kas.nu.edu.kz/arcgis/rest/services/CampusMap2d_MIL1/MapServer/",
+              layerId: id
+            });
+            map.layers.add(layer);
+          }
+
+        }
+
+        // find Floor
+        const addFloorUI = title => {
+          let li = document.createElement('li');
+          li.setAttribute('id', title);
+          li.setAttribute('class', 'li-floorBlockInfo');
+          li.innerHTML = title;
+          floorDiv.appendChild(li);
+        }
+
+        // remove/add floor layer
+        const findLayer = floor => {
+          if (floor != floor_visible_old) {
+            let info;
+            floorBlockInfo.findIndex(el => {
+              if (floor == el.title) {
+                info = el;
+                return true;
+              }
+            })
+            let remove_index = [];
+            map.layers.items.forEach((el, index) => {
+              if (el.title == floor_visible_old) {
+                remove_index.push(index);
+              }
+            })
+            remove_index.reverse().forEach(el => {
+              map.layers.removeAt(el);
+            })
+            
+            addLayer(info.floor_id, info.title, "floor")
+            addLayer(info.block_id, info.title, "room")
+            floor_visible_old = floor;
+            correctOrderLayers();
+          }
+        }
+        
+        // points,route,search_result over NU layers 
+        const correctOrderLayers = () => {
+          let remove_index = [];
+          map.layers.items.forEach((el, index) => {
+            if (
+              el.title == start_point_graphic.title ||
+              el.title == finish_point_graphic.title ||
+              el.title == search_result_graphic.title ||
+              el.title == route_graphic.title
+            ) {
+              remove_index.push(index);
+            }
+          })
+          remove_index.reverse().forEach(el => {
+            map.layers.removeAt(el);
+          })
+          map.add(start_point_graphic);
+          map.add(finish_point_graphic);
+          map.add(search_result_graphic);
+          map.add(route_graphic);
+        }
+
+        // add another layers
         anotherInfo.forEach(el => {
-          addFloorLayer(el.layer_id, el.title);
+          addLayer(el.id, el.title, "another");
         })
 
-        function addFloorLayer(layer_id, title) {
-          const floorLayer = new FeatureLayer({
-            spatialReference: 3857,
-            opacity: 1,
-            title: title,
-            url:
-              "https://kas.nu.edu.kz/arcgis/rest/services/CampusMap2d_MIL1/MapServer/",
-            layerId: layer_id
-          });
-          map.layers.add(floorLayer);
-        }
+        // add floor to UI
+        floorBlockInfo.forEach(el => {
+          addFloorUI(el.title);
+        })
+        addFloorUI('all');
 
         // **Search**
         // add Graphic
-        var graphic_layer = new GraphicsLayer();
-        map.add(graphic_layer);
-        var route_graphic = new GraphicsLayer();
-        map.add(route_graphic);
-
-        const search = document.getElementById('search');
-        const search_input = document.getElementById('search_input');
-        const search_menu = document.getElementById('search_menu');
-        const search_ul = document.getElementById('search_ul');
-        const search_button = document.getElementById('search_button');
+        var start_point_graphic = new GraphicsLayer({
+          title: "Терминал"
+        });
+        var finish_point_graphic = new GraphicsLayer({
+          title: "Конечная точка"
+        });
+        var search_result_graphic = new GraphicsLayer({
+          title: "Поиск"
+        });
+        var route_graphic = new GraphicsLayer({
+          title: "Маршрут"
+        });
+        
 
         // **Direction** 10.10.17.13:6443  kazaerospace01 kas.nu.edu.kz
         var stairs_url =
           "https://kas.nu.edu.kz/arcgis/rest/services/NU/routeStairs/NAServer/%D0%9C%D0%B0%D1%80%D1%88%D1%80%D1%83%D1%82";
         var elevator_url =
           "https://kas.nu.edu.kz/arcgis/rest/services/NU/Routeelevator/NAServer/%D0%9C%D0%B0%D1%80%D1%88%D1%80%D1%83%D1%82";
+        // var elevator_url = // new url ???
+        //   "https://kazaerospace01/arcgis/rest/services/NU/RouteSeparate/NAServer/%D0%9C%D0%B0%D1%80%D1%88%D1%80%D1%83%D1%82";
         var routeTaskStairs = new RouteTask({
           url: stairs_url
         });
         var routeTaskElev = new RouteTask({
           url: elevator_url
         });
+
+        // var locator = new Locator ({
+        //   url: "https://kas.nu.edu.kz/arcgis/rest/services/NU/RoomsLocSF/GeocodeServer"
+        // })
 
         // var directionsWidget = new Directions({
         //   view: view,
@@ -316,21 +599,39 @@
         //       }
         //     ]
         //   }
-        // });
+        // }); 
+
+        var floor_visible_old = "1";
         var start_point = {
           type: "point",
-          longitude: 71.39522249715789,
-          latitude: 51.090797209203515,
+          longitude: 71.39519775578684,
+          latitude: 51.09080078480889,
         };
         view.when(function() {
           search_menu.style.display = "block";
           view.ui.add(search_menu, "top-left");
+          view.ui.add(floorDiv, 'top-left');
           // view.ui.add(directionsWidget, "bottom-right");
+          
+          // click to Floor
+          floorDiv.addEventListener('click', e => {
+            findLayer(e.target.id);
+          });
+          addLayer(floorBlockInfo[0].floor_id, floorBlockInfo[0].title, "floor");
+          addLayer(floorBlockInfo[0].block_id, floorBlockInfo[0].title, "room");
+          map.add(start_point_graphic);
+          map.add(finish_point_graphic);
+          map.add(search_result_graphic);
+          map.add(route_graphic);
+          
+          // map.layers.findIndex(el => {
+          //   console.log(el)
+          // })
 
           // search_button.addEventListener('click', (e) => {
           //   let pulse = document.querySelector("a.waves-effect");
           //   if (pulse.classList.contains("pulse")) {
-          //     graphic_layer.removeAll();
+          //     search_result_graphic.removeAll();
           //     doQueryResult();
           //   }
           // })
@@ -346,8 +647,10 @@
                 let text_li = src_el.id;
                 document.querySelector("#search_input").focus();
                 search_input.value = text_li;
-                graphic_layer.removeAll();
+                finish_point_graphic.removeAll();
+                search_result_graphic.removeAll();
                 route_graphic.removeAll();
+                // findLocator(search_input.value);
                 doQueryResult();
                 // pulseAnimation(true);
                 CloseDropdown();
@@ -452,11 +755,11 @@
         });
         
         // create finish point
-        const checkFinishPoint = (map_point) => {
+        const checkFinishPoint = (latitude, longitude) => {
           let finish_point = {
               type: "point",
-              latitude: map_point.latitude,
-              longitude: map_point.longitude
+              latitude: latitude,
+              longitude: longitude
           }
           return finish_point;
         }
@@ -814,6 +1117,7 @@
           // if (length == 1) {
             let feature = features.forEach(features => {
               if (!block_search) {
+                findLayer(features.attributes.floor)
                 features.popupTemplate = {
                   title: "Информация",
                   content: 
@@ -841,18 +1145,18 @@
                   width: 1
                 }
               };
-              graphic_layer.add(features);
+              search_result_graphic.add(features);
             })
-            console.log(features[0].geometry)
+            // console.log(features)
             view.goTo({
               target: features[0].geometry,
-              scale: 2000
+              scale: 500
             });
-            view.popup.open({
-              features: features,
-              featureMenuOpen: true,
-              updateLocationEnabled: true
-            });
+            // view.popup.open({
+            //   features: features,
+            //   featureMenuOpen: true,
+            //   updateLocationEnabled: true
+            // });
             // pulseAnimation(false);
           // }
 
@@ -893,10 +1197,9 @@
         var finish_point;
         window.createDirection = (lat, long) => {
           view.popup.close();
-          // view.graphics.removeAll();//??
-          // graphic_layer.removeAll();
-          // route_graphic.removeAll();
-          addGraphic("start", start_point);//??
+          finish_point_graphic.removeAll();
+          search_result_graphic.removeAll();
+          route_graphic.removeAll();
 
           // console.log(lat, long)
           finish_point = {
@@ -904,8 +1207,8 @@
             latitude: lat,
             longitude: long
           }
-          addGraphic("finish", checkFinishPoint(finish_point));
 
+          addGraphic("finish", checkFinishPoint(finish_point.x, finish_point.y));
           getRoute();
           // let input1 = document.querySelectorAll("ol.esri-directions__stops > li:nth-child(1) > div.esri-directions__stop-input > div.esri-search.esri-widget >"+
           // "div.esri-search--multiple-sources.esri-search__container > div.esri-search__input-container > form > input");
@@ -930,6 +1233,7 @@
               // xoffset: -11
             },
             graphic.geometry = point;
+            start_point_graphic.add(graphic)
           } else if (type == "finish") {
             graphic.symbol = {
               type: "picture-marker",
@@ -940,8 +1244,8 @@
               // yoffset: 11
             },
             graphic.geometry = point;
+            finish_point_graphic.add(graphic);
           }
-          view.graphics.add(graphic);
         }
         
         var route_task = "elevator";
@@ -949,16 +1253,23 @@
         // get route
         const getRoute = () => {
           section_ol.innerHTML = "";
-          // view.graphics.removeAll();
-          // graphic_layer.removeAll();
-          // route_graphic.removeAll();
-          addGraphic("start", start_point);
-          addGraphic("finish", checkFinishPoint(finish_point));
+          finish_point_graphic.removeAll();
+          search_result_graphic.removeAll();
+          route_graphic.removeAll();
+          // addGraphic("start", start_point);
+          addGraphic("finish", checkFinishPoint(finish_point.latitude, finish_point.longitude));
           view.ui.empty("top-right");
+
           // Setup the route parameters
           var routeParams = new RouteParameters({
             stops: new FeatureSet({
-                features: view.graphics.toArray() // Pass the array of graphics
+                // features: view.graphics.toArray() // Pass the array of graphics
+                features: [{
+                    geometry: start_point_graphic.graphics.items[0].geometry
+                  },{
+                    geometry: finish_point_graphic.graphics.items[0].geometry
+                  }
+                ]
             }),
             returnDirections: true
           });
@@ -970,44 +1281,44 @@
 
               // Show the direction list
               let features = data.routeResults[0].directions.features;
+              let geom_route = route_graphic.graphics.items[0].geometry.clone();
+              geom_route.spatialReference = {
+                wkid: 4326
+              }
               
+              view.goTo({
+                target: geom_route,
+                scale: 2000
+              });
+
               addRouteList(features);
 
             });
             view.ui.add(direction_div, "top-right");
           } else if (route_task == "elevator") {
             routeTaskElev.solve(routeParams).then((data) => {
-              // console.log(data)
+              console.log("route data",data)
               // Display the route
               addSymbol(data.routeResults);
 
               // Show the direction list
               let features = data.routeResults[0].directions.features;
-              // let direction_extent = new Geometry({
-                let direction_extent = data.routeResults[0].directions.extent.clone();
-              // })
-              var parcelExtent = data.routeResults[0].directions.mergedGeometry.clone();
+              let geom_route = route_graphic.graphics.items[0].geometry.clone();
+              geom_route.spatialReference = {
+                wkid: 4326
+              }
               
-              // let extent_route_graphic = route_graphic;
-              route_graphic.graphics.items[0].geometry.spatialReference.wkid = 4326;
-              route_graphic.graphics.items[0].geometry.spatialReference.latestWkid = 4326;
-              console.log(route_graphic);
-              // view.extent = route_graphic.graphics.items[0].geometry.extent;
-              // view.goTo({
-              //   target: route_graphic.graphics.items[0].geometry.extent,
-              //   scale: 2000,
-              //   // zoom: 15
-              // },{
-              //   // duration: 2000,
-              //   // easing: "ease-in"
-              // });
-              // console.log(features)
-              console.log(view)
+              view.goTo({
+                target: geom_route,
+                scale: 2000
+              });
+
               addRouteList(features);
 
             })
             view.ui.add(direction_div, "top-right");
           }
+          console.log(view.graphics)
         }
 
         // add symbol to results
@@ -1116,6 +1427,41 @@
 
         }
 
+        // var point_finish;
+        // const findLocator = (value) => {
+        //   let address = {
+        //     "SingleKey": value
+        //   };
+        //   locator.addressToLocations({
+        //     address: address,
+        //     outFields: ["*"],
+        //     // outSpatialReference: {
+        //     //   wkid: 32642
+        //     // }
+        //   })
+        //   .then(function(results) {
+        //     results.forEach(function(result){
+        //       console.log("result",result)
+        //       let spatialRef = new SpatialReference ({
+        //         wkid: 102100,
+        //         // latestWkid: 3857,
+        //         // isWebMercator: true,
+        //         // isWrappable: true
+        //       })//32642
+        //       point_finish = new Point({
+        //         x: result.location.x,
+        //         y: result.location.y,
+        //         spatialReference: spatialRef
+        //       });
+        //       console.log("point finish",point_finish)
+        //     });
+            
+        //   }, function(err) { // Show no address found
+        //     console.log('error')
+        //     showPopup("No address found.", evt.mapPoint);
+        //   });
+        // }
+
         // Display the directions
         var direction_div = document.createElement("div");
         direction_div.classList = "esri-widget esri-widget--panel esri-directions__scroller direction-div";
@@ -1185,11 +1531,10 @@
 
         // close all graphics && route list
         close_a.onclick = () => {
-          graphic_layer.removeAll();
+          finish_point_graphic.removeAll();
+          search_result_graphic.removeAll();
           route_graphic.removeAll();
           view.popup.close();
-          // view.graphics.removeAll();//??
-          addGraphic("start", start_point);//??
           view.ui.empty("top-right");
         }
 
@@ -1199,6 +1544,7 @@
 
   <body>
     <div id="viewDiv"></div>
+    <div id="floorBlockInfo" class="floorBlockInfo"></div>
     <div id="search_menu" class="search-menu">
       <div id="search" class="search-item input-field">
         <input id="search_input" class="validate" type="text" autocomplete="off" />
