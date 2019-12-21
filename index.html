@@ -766,7 +766,8 @@
         }
 
         // when input changed
-        search_input.oninput = (event) => {
+        // search_input.oninput = (event) => {
+        search_input.addEventListener("input", (event) => {
           console.log(event)
           CloseDropdown();
           clearUlListSelf();
@@ -776,7 +777,7 @@
           } else {
             console.log("input is empty");
           }
-        }
+        })
         //input.addEventListener('input', updateValue);
         
         // keypress
