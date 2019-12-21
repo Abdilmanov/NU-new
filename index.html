@@ -635,15 +635,16 @@
           //     doQueryResult();
           //   }
           // })
+
           // Проверка клика
           document.body.addEventListener("click", function(e) {
+            let src_el = e.srcElement;
             let activeUl = document.querySelector(".activeUl");
             // Открыт ли dropdown
             if (activeUl) {
-              let src_el = e.srcElement;
               // console.log(e)
               // Клик был по dropdown
-              if (src_el.localName == "li" && src_el.id != "dangerLi") {
+              if (src_el.className == "collection-item" && src_el.id != "dangerLi") {
                 let text_li = src_el.id;
                 document.querySelector("#search_input").focus();
                 search_input.value = text_li;
@@ -766,6 +767,7 @@
 
         // when input changed
         search_input.oninput = (event) => {
+          console.log(event)
           CloseDropdown();
           clearUlListSelf();
           let value = event.srcElement.value;
@@ -904,14 +906,17 @@
           let features = response.features;
           let length = features.length;
           if (length == 0) {
-            // console.log("Нет данных по данному запросу");
-            let li = document.createElement("li");
-            li.setAttribute("id", "dangerLi");
-            li.setAttribute("class", "collection-item");
-            li.innerHTML = "Нет данных по запросу";
-            let active_element = document.activeElement.id;
-            search_ul.appendChild(li);
-            search_ul.classList.add("activeUl");
+            let check_dangerLi = document.querySelector("#dangerLi");
+            if (!check_dangerLi) {
+              // console.log("Нет данных по данному запросу");
+              let li = document.createElement("li");
+              li.setAttribute("id", "dangerLi");
+              li.setAttribute("class", "collection-item");
+              li.innerHTML = "Нет данных по запросу";
+              let active_element = document.activeElement.id;
+              search_ul.appendChild(li);
+              search_ul.classList.add("activeUl");
+            }
           } else if (!block_search) {
             let index1 = 0;
             let index2 = 0;
@@ -1152,7 +1157,7 @@
               target: features[0].geometry,
               scale: 500
             }).then(openPopup);
-            
+
             function openPopup(info) {
               view.popup.open({
                 features: features,
@@ -1197,6 +1202,7 @@
           return text;
         }
         
+        // Click to "Построить маршрут"
         var finish_point;
         window.createDirection = (lat, long) => {
           view.popup.close();
@@ -1224,7 +1230,7 @@
 
         // add start/finish point
         const addGraphic = (type, point) => {
-          var graphic = new Graphic();
+          let graphic = new Graphic();
           if (type == "start") {
             graphic.symbol = {
               type: "picture-marker",
@@ -1257,7 +1263,7 @@
         const getRoute = () => {
           section_ol.innerHTML = "";
           finish_point_graphic.removeAll();
-          search_result_graphic.removeAll();
+          // search_result_graphic.removeAll();
           route_graphic.removeAll();
           // addGraphic("start", start_point);
           addGraphic("finish", checkFinishPoint(finish_point.latitude, finish_point.longitude));
@@ -1279,11 +1285,11 @@
           if (route_task == "stairs") {
             // Get the route
             routeTaskStairs.solve(routeParams).then((data) => {
+              let features = data.routeResults[0].directions.features;
               // Display the route
-              addSymbol(data.routeResults);
+              addSymbol(features);
 
               // Show the direction list
-              let features = data.routeResults[0].directions.features;
               let geom_route = route_graphic.graphics.items[0].geometry.clone();
               geom_route.spatialReference = {
                 wkid: 4326
@@ -1291,7 +1297,7 @@
               
               view.goTo({
                 target: geom_route,
-                scale: 2000
+                scale: 2500
               });
 
               addRouteList(features);
@@ -1301,19 +1307,20 @@
           } else if (route_task == "elevator") {
             routeTaskElev.solve(routeParams).then((data) => {
               console.log("route data",data)
+              let features = data.routeResults[0].directions.features;
               // Display the route
-              addSymbol(data.routeResults);
+              // addSymbol(data.routeResults);
+              addSymbol(features);
 
               // Show the direction list
-              let features = data.routeResults[0].directions.features;
               let geom_route = route_graphic.graphics.items[0].geometry.clone();
               geom_route.spatialReference = {
                 wkid: 4326
               }
-              
+              console.log(geom_route)
               view.goTo({
                 target: geom_route,
-                scale: 2000
+                scale: 2500
               });
 
               addRouteList(features);
@@ -1324,15 +1331,25 @@
           console.log(view.graphics)
         }
 
+        var route_symbol = false;
+        var route_default_symbol = {
+          type: "simple-line",
+          color: [46, 204, 64],
+          width: 3
+        };
+        var route_active_symbol = {
+          type: "simple-line",
+          color: [0, 255, 255],
+          width: 5
+        }
+        var index_route = null;
         // add symbol to results
         const addSymbol = (route_result) => {
           route_result.forEach((result) => {
-            result.route.symbol = {
-              type: "simple-line",
-              color: [38, 166, 149],
-              width: 3
-            };
-            route_graphic.add(result.route);
+            // result.route.symbol = {
+            result.symbol = route_default_symbol;
+            // route_graphic.add(result.route);
+            route_graphic.add(result);
           });
         }
 
@@ -1369,6 +1386,57 @@
             section_li.appendChild(img);
             section_li.appendChild(div1);
             section_ol.appendChild(section_li);
+            section_li.onclick = (e) => {
+              console.log(e)
+              // Change color on route
+              let index = e.path.findIndex(el => el.className == "esri-directions__maneuver")
+              let text = e.path[index].children[1].children[0].innerHTML;
+              if (route_symbol && index_route) {
+                route_graphic.graphics.items[index_route].symbol = route_default_symbol;
+              }
+              index_route = route_graphic.graphics.items.findIndex((el) => {
+                // console.log(el)
+                if (el.attributes.text == text) {
+                  route_symbol = true;
+                  el.symbol = route_active_symbol;
+                  return true;
+                }
+              });
+              // Change floor
+              console.log(result.attributes.text)
+              // console.log(result.attributes.text.indexOf("floor"))
+              // console.log(result.attributes.text.includes("floor"))
+              if (result.attributes.text.includes("Start")) {
+                let j = 1;
+                if (!features[i+j].attributes.text.indexOf("floor")) {
+                  j++;
+                } else {
+                  let index = features[i+j].attributes.text.indexOf("floor");
+                  let floor_number = features[i+j].attributes.text.slice(index+6,index+7);
+                  // console.log(features)
+                  console.log(index)
+                  // console.log(typeof Number(floor_number));
+                  findLayer(Number(floor_number));
+                }
+              } else if (result.attributes.text.includes("floor")) {
+                let index = result.attributes.text.indexOf("floor");
+                let floor_number = result.attributes.text.slice(index+6,index+7);
+                console.log(index)
+                // console.log(typeof Number(floor_number));
+                findLayer(Number(floor_number));
+              } else {
+                let j = 1;
+                if (!features[i-j].attributes.text.indexOf("floor")) {
+                  j++;
+                } else {
+                  let index = features[i-j].attributes.text.indexOf("floor");
+                  let floor_number = features[i-j].attributes.text.slice(index+6,index+7);
+                  console.log(index)
+                  // console.log(typeof Number(floor_number));
+                  findLayer(Number(floor_number));
+                }
+              }
+            }
           });
         }
 
