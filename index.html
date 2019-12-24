@@ -610,6 +610,7 @@
           latitude: 51.09080198480889,
         };
         view.when(function() {
+          console.log(location.search.substr(1));
           search_menu.style.display = "block";
           view.ui.add(search_menu, "top-left");
           view.ui.add(floorDiv, 'top-left');
@@ -1323,8 +1324,8 @@
             // Get the route
             routeTaskStairs.solve(routeParams).then((data) => {
               if (direction_button.style.display = "none") {
-                direction_button.style.display = "inline";
-                direction_divider.style.display = "inline";
+                direction_button.style.display = "inline-block";
+                direction_divider.style.display = "block";
               }
               console.log("stairs data",data)
               check_getRoute = true;
@@ -1350,8 +1351,8 @@
           } else if (route_task == "elevator") {
             routeTaskElev.solve(routeParams).then((data) => {
               if (direction_button.style.display = "none") {
-                direction_button.style.display = "inline";
-                direction_divider.style.display = "inline";
+                direction_button.style.display = "inline-block";
+                direction_divider.style.display = "block";
               }
               check_getRoute = true;
               console.log("elev data",data)
