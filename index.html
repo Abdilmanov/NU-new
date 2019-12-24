@@ -1294,22 +1294,22 @@
             // Get the route
             standartRouteTask.solve(routeParams).then((data) => {
               console.log(data)
-              // let features = data.routeResults[0].directions.features;
-              // // Display the route
-              // addSymbol(features);
+              let features = data.routeResults[0].directions.features;
+              // Display the route
+              addSymbol(features);
 
-              // // Show the direction list
-              // let geom_route = route_graphic.graphics.items[0].geometry.clone();
-              // geom_route.spatialReference = {
-              //   wkid: 4326
-              // }
+              // Show the direction list
+              let geom_route = route_graphic.graphics.items[0].geometry.clone();
+              geom_route.spatialReference = {
+                wkid: 4326
+              }
               
-              // view.goTo({
-              //   target: geom_route,
-              //   scale: 2500
-              // });
+              view.goTo({
+                target: geom_route,
+                scale: 2500
+              });
 
-              // addRouteList(features);
+              addRouteList(features);
 
             });
             view.ui.add(direction_div, "top-right");
