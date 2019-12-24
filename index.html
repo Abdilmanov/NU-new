@@ -161,6 +161,10 @@
         background-color: #f0f0f0;
       }
 
+      .esri-popup__feature-menu-item {
+        background-color: white!important;
+        color:black!important;
+      }
       /* .direction-div {
         display: none;
       } */
@@ -1290,6 +1294,8 @@
             returnDirections: true
           });
           if (standart) {
+            direction_button.style.display = "none";
+            direction_divider.style.display = "none";
             check_defaultRoute = true;
             // Get the route
             standartRouteTask.solve(routeParams).then((data) => {
@@ -1313,10 +1319,13 @@
 
             });
             view.ui.add(direction_div, "top-right");
-            switches.style.display = "none"
           } else if (route_task == "stairs") {
             // Get the route
             routeTaskStairs.solve(routeParams).then((data) => {
+              if (direction_button.style.display = "none") {
+                direction_button.style.display = "inline";
+                direction_divider.style.display = "inline";
+              }
               console.log("stairs data",data)
               check_getRoute = true;
               let features = data.routeResults[0].directions.features;
@@ -1340,6 +1349,10 @@
             view.ui.add(direction_div, "top-right");
           } else if (route_task == "elevator") {
             routeTaskElev.solve(routeParams).then((data) => {
+              if (direction_button.style.display = "none") {
+                direction_button.style.display = "inline";
+                direction_divider.style.display = "inline";
+              }
               check_getRoute = true;
               console.log("elev data",data)
               let features = data.routeResults[0].directions.features;
