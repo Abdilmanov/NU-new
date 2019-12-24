@@ -106,11 +106,11 @@
       }
       .button-stairs-elevator {
         display: inline-block;
-        margin: 0 15px 15px 15px;
+        margin: 0 15px 15px 30px;
       }
       .dir-name {
         font-size: 18px;
-        padding: 10px!important;
+        padding: 10px 10px 10px 28px!important;
       }
       .close {
         color: #777;
@@ -138,6 +138,8 @@
         max-height: 150px;
         overflow-y: auto;
         background-color: white;
+        position: absolute;
+        top: 90px;
       }
       .li-floorBlockInfo {
         text-align: center;
@@ -386,6 +388,7 @@
           },
         ]
 
+        // add Layer to map
         const addLayer = (id, title, type) => {
           if (type == "floor") {
             let layer = new FeatureLayer({
@@ -395,37 +398,8 @@
                 "https://kas.nu.edu.kz/arcgis/rest/services/CampusMap2d_MIL1/MapServer/",
               layerId: id,
               popupTemplate: {
-                title: title,
-                content: [
-                  {
-                    type: "fields",
-                    fieldInfos: [{
-                      fieldName: "name",
-                      format: {
-                        digitSeparator: true,
-                        places: 0
-                        }
-                      },{
-                      fieldName: "floor",
-                      format: {
-                        digitSeparator: true,
-                        places: 2
-                        }
-                      },{
-                      fieldName: "h",
-                      format: {
-                        digitSeparator: true,
-                        places: 2
-                        }
-                      },{
-                      fieldName: "namefloor",
-                      format: {
-                        digitSeparator: true,
-                        places: 0
-                        }
-                    }]
-                  }
-                ]
+                title: "Информация по блоку",
+                content: "<b>Блок: </b> {name}</br>"
               }
             });
             map.layers.add(layer);
@@ -437,31 +411,15 @@
                 "https://kas.nu.edu.kz/arcgis/rest/services/CampusMap2d_MIL1/MapServer/",
               layerId: id,
               popupTemplate: {
-                title: title,
-                content: [
-                  {
-                    type: "fields",
-                    fieldInfos: [{
-                      fieldName: "floor",
-                      format: {
-                        digitSeparator: true,
-                        places: 0
-                        }
-                      },{
-                      fieldName: "roomnum",
-                      format: {
-                        digitSeparator: true,
-                        places: 2
-                        }
-                      },{
-                      fieldName: "nameroom",
-                      format: {
-                        digitSeparator: true,
-                        places: 0
-                        }
-                    }]
-                  }
-                ]
+                title: "Информация по кабинету",
+                content: 
+                  "<b>Кабинет: </b> {roomnum} ({nameroom})</br>"+
+                  "<b>Блок: </b> {block}</br>"+
+                  "<b>Этаж: </b> {floor}</br>"+
+                  "</br>"+
+                  "<a class='waves-effect waves-light btn-small small-padding'"+
+                  "onClick='createDirectionFeature({roomnum})' style='color: white!important;'>"+
+                  "<i class='material-icons left medium-margin'>transfer_within_a_station</i>Построить маршрут</a></br>"
               }
             });
             map.layers.add(layer);
@@ -478,6 +436,39 @@
 
         }
 
+        // room request on layers
+        window.createDirectionFeature = (roomnum) => {
+          console.log(roomnum)
+          let sqlTxt = "roomnum = '" + roomnum + "'";
+          let params = new Query({
+            where: sqlTxt
+          });
+          params.outFields = ["roomnum"];
+          
+          params.returnGeometry = true;
+          params.returnDistinctValues = false;
+
+          var qTask = new QueryTask({
+            url: `https://kas.nu.edu.kz/arcgis/rest/services/NU/blockRoomsAddress/MapServer/0`
+          });
+
+          qTask
+            .execute(params)
+            .then(getResultsFeature)
+            .catch(promiseRejected);
+        }
+
+        var finish_point;
+        // get request
+        const getResultsFeature = (response) => {
+          let geom = response.features[0].geometry.clone();
+          finish_point = {
+            type: "point",
+            latitude: geom.latitude,
+            longitude: geom.longitude
+          }
+          getRoute();
+        }
         // find Floor
         const addFloorUI = title => {
           let li = document.createElement('li');
@@ -545,7 +536,7 @@
         floorBlockInfo.forEach(el => {
           addFloorUI(el.title);
         })
-        addFloorUI('all');
+        // addFloorUI('all');???
 
         // **Search**
         // add Graphic
@@ -604,8 +595,9 @@
         var floor_visible_old = "1";
         var start_point = {
           type: "point",
-          longitude: 71.39519775578684,
-          latitude: 51.09080078480889,
+          // longitude: 71.39519775578684,
+          longitude: 71.39515775578684,
+          latitude: 51.09080198480889,
         };
         view.when(function() {
           search_menu.style.display = "block";
@@ -638,6 +630,7 @@
 
           // Проверка клика
           document.body.addEventListener("click", function(e) {
+            // console.log(e)
             let src_el = e.srcElement;
             let activeUl = document.querySelector(".activeUl");
             // Открыт ли dropdown
@@ -771,7 +764,7 @@
           CloseDropdown();
           clearUlListSelf();
           let value = event.srcElement.value;
-          console.log(value)
+          // console.log(value)
           if (!value == "") {
             doQuery(value);
           } else {
@@ -886,9 +879,10 @@
 
           if (!block_search) {
             var qTask = new QueryTask({
-              url: `https://kas.nu.edu.kz/arcgis/rest/services/CampusMap2d_MIL1/MapServer/3`
+              url: `https://kas.nu.edu.kz/arcgis/rest/services/NU/blockRoomsAddress/MapServer/0`
             });
           } else {
+            //search for block
             var qTask = new QueryTask({
               url: `https://kas.nu.edu.kz/arcgis/rest/services/CampusMap2d_MIL1/MapServer/52`
             });
@@ -1099,9 +1093,10 @@
 
           if (!block_search) {
             var qTask = new QueryTask({
-              url: `https://kas.nu.edu.kz/arcgis/rest/services/CampusMap2d_MIL1/MapServer/3`
+              url: `https://kas.nu.edu.kz/arcgis/rest/services/NU/blockRoomsAddress/MapServer/0`
             });
           } else {
+            // search for block
             var qTask = new QueryTask({
               url: `https://kas.nu.edu.kz/arcgis/rest/services/CampusMap2d_MIL1/MapServer/52`
             });
@@ -1118,8 +1113,8 @@
           console.log("features = ", response.features);
           let features = response.features;
           let length = features.length;
-          let centroid = features[0].geometry.centroid;
-
+          let geometry = features[0].geometry;
+          // console.log(centroid)
           // if (length == 1) {
             let feature = features.forEach(features => {
               if (!block_search) {
@@ -1132,7 +1127,7 @@
                   "<b>Этаж: </b> " + features.attributes.floor + "</br>"+
                   "</br>"+
                   "<a class='waves-effect waves-light btn-small small-padding'"+
-                  "onClick='createDirection(" + features.geometry.centroid.latitude + "," + features.geometry.centroid.longitude + ")' style='color: white!important;'>"+
+                  "onClick='createDirection(" + geometry.latitude + "," + geometry.longitude + ")' style='color: white!important;'>"+
                   "<i class='material-icons left medium-margin'>transfer_within_a_station</i>Построить маршрут</a></br>"
                   
                 }
@@ -1155,7 +1150,7 @@
             })
             // console.log(features)
             view.goTo({
-              target: features[0].geometry,
+              target: geometry,
               scale: 500
             }).then(openPopup);
 
@@ -1204,7 +1199,6 @@
         }
         
         // Click to "Построить маршрут"
-        var finish_point;
         window.createDirection = (lat, long) => {
           view.popup.close();
           finish_point_graphic.removeAll();
@@ -1237,8 +1231,8 @@
               type: "picture-marker",
               url:
                 "./assets/direction-maneuvers/Start24.svg",
-              // width: 22,
-              // height: 22,
+              width: 18,
+              height: 18,
               // yoffset: 11,
               // xoffset: -11
             },
@@ -1249,8 +1243,8 @@
               type: "picture-marker",
               url:
                 "./assets/direction-maneuvers/End24.svg",
-              // width: 22,
-              // height: 22,
+              width: 18,
+              height: 18,
               // yoffset: 11
             },
             graphic.geometry = point;
@@ -1269,7 +1263,6 @@
           // addGraphic("start", start_point);
           addGraphic("finish", checkFinishPoint(finish_point.latitude, finish_point.longitude));
           view.ui.empty("top-right");
-
           // Setup the route parameters
           var routeParams = new RouteParameters({
             stops: new FeatureSet({
@@ -1307,7 +1300,7 @@
             view.ui.add(direction_div, "top-right");
           } else if (route_task == "elevator") {
             routeTaskElev.solve(routeParams).then((data) => {
-              console.log("route data",data)
+              // console.log("route data",data)
               let features = data.routeResults[0].directions.features;
               // Display the route
               // addSymbol(data.routeResults);
@@ -1318,7 +1311,7 @@
               geom_route.spatialReference = {
                 wkid: 4326
               }
-              console.log(geom_route)
+              // console.log(geom_route)
               view.goTo({
                 target: geom_route,
                 scale: 2500
@@ -1329,7 +1322,7 @@
             })
             view.ui.add(direction_div, "top-right");
           }
-          console.log(view.graphics)
+          // console.log(view.graphics)
         }
 
         var route_symbol = false;
@@ -1356,9 +1349,11 @@
 
         // create route list
         const addRouteList = (features) => {
+          // console.log(features)
           features.forEach((result, i) => {
             let section_li = document.createElement("li");
             section_li.classList = "esri-directions__maneuver";
+            section_li.id = i;
             
             let img = document.createElement("img");
             img.classList = "esri-directions__maneuver-icon";
@@ -1388,25 +1383,19 @@
             section_li.appendChild(div1);
             section_ol.appendChild(section_li);
             section_li.onclick = (e) => {
-              console.log(e)
+              // console.log(e)
               // Change color on route
               let index = e.path.findIndex(el => el.className == "esri-directions__maneuver")
               let text = e.path[index].children[1].children[0].innerHTML;
+              let text_id = e.path[index].id;
               if (route_symbol && index_route) {
                 route_graphic.graphics.items[index_route].symbol = route_default_symbol;
               }
-              index_route = route_graphic.graphics.items.findIndex((el) => {
-                // console.log(el)
-                if (el.attributes.text == text) {
-                  route_symbol = true;
-                  el.symbol = route_active_symbol;
-                  return true;
-                }
-              });
+              index_route = text_id;
+              route_graphic.graphics.items[text_id].symbol = route_active_symbol;
+              route_symbol = true;
+              
               // Change floor
-              console.log(result.attributes.text)
-              // console.log(result.attributes.text.indexOf("floor"))
-              // console.log(result.attributes.text.includes("floor"))
               if (result.attributes.text.includes("Start")) {
                 let j = 1;
                 if (!features[i+j].attributes.text.indexOf("floor")) {
@@ -1414,16 +1403,14 @@
                 } else {
                   let index = features[i+j].attributes.text.indexOf("floor");
                   let floor_number = features[i+j].attributes.text.slice(index+6,index+7);
-                  // console.log(features)
+
                   console.log(index)
-                  // console.log(typeof Number(floor_number));
                   findLayer(Number(floor_number));
                 }
               } else if (result.attributes.text.includes("floor")) {
                 let index = result.attributes.text.indexOf("floor");
                 let floor_number = result.attributes.text.slice(index+6,index+7);
-                console.log(index)
-                // console.log(typeof Number(floor_number));
+                
                 findLayer(Number(floor_number));
               } else {
                 let j = 1;
@@ -1433,7 +1420,7 @@
                   let index = features[i-j].attributes.text.indexOf("floor");
                   let floor_number = features[i-j].attributes.text.slice(index+6,index+7);
                   console.log(index)
-                  // console.log(typeof Number(floor_number));
+                  
                   findLayer(Number(floor_number));
                 }
               }
