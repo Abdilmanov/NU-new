@@ -1313,10 +1313,11 @@
 
             });
             view.ui.add(direction_div, "top-right");
+            switches.style.display = "none"
           } else if (route_task == "stairs") {
-            console.log("stairs data",data)
             // Get the route
             routeTaskStairs.solve(routeParams).then((data) => {
+              console.log("stairs data",data)
               check_getRoute = true;
               let features = data.routeResults[0].directions.features;
               // Display the route
@@ -1510,7 +1511,7 @@
             return "https://js.arcgis.com/4.13/esri/themes/base/images/maneuvers/straight.png";
           } else if (text.indexOf("Bear right", 0) == 0) {//??
             return "https://js.arcgis.com/4.13/esri/themes/base/images/maneuvers/straight.png";
-          } else if (text.indexOf("Make sharp left", 0) == 0) {
+          } else if (text.indexOf("sharp left", 0) == 0) {
             if (text.includes("immediately turn right")) {
               return "https://js.arcgis.com/4.13/esri/themes/base/images/maneuvers/left-right.png";
             } else if (text.includes("immediately turn left")) {
@@ -1518,7 +1519,7 @@
             } else {
               return "https://js.arcgis.com/4.13/esri/themes/base/images/maneuvers/sharp-left.png";
             }
-          } else if (text.indexOf("Make sharp right", 0) == 0) {
+          } else if (text.indexOf("sharp right", 0) == 0) {
             if (text.includes("immediately turn right")) {
               return "https://js.arcgis.com/4.13/esri/themes/base/images/maneuvers/right-right.png";
             } else if (text.includes("immediately turn left")) {
