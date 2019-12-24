@@ -467,7 +467,7 @@
             latitude: geom.latitude,
             longitude: geom.longitude
           }
-          getRoute();
+          getRoute(false);
         }
         // find Floor
         const addFloorUI = title => {
@@ -567,6 +567,11 @@
         var routeTaskElev = new RouteTask({
           url: elevator_url
         });
+        // ArcGIS Online hosted service proxy
+        var standartRouteTask = new RouteTask({
+          url:
+            "https://utility.arcgis.com/usrsvcs/appservices/srsKxBIxJZB0pTZ0/rest/services/World/Route/NAServer/Route_World"
+        });
 
         // var locator = new Locator ({
         //   url: "https://kas.nu.edu.kz/arcgis/rest/services/NU/RoomsLocSF/GeocodeServer"
@@ -644,6 +649,8 @@
                 finish_point_graphic.removeAll();
                 search_result_graphic.removeAll();
                 route_graphic.removeAll();
+                view.popup.close();
+                view.ui.empty("top-right");
                 // findLocator(search_input.value);
                 doQueryResult();
                 // pulseAnimation(true);
@@ -1148,6 +1155,7 @@
               };
               search_result_graphic.add(features);
             })
+            // console.log(map.layers)
             // console.log(features)
             view.goTo({
               target: geometry,
@@ -1213,7 +1221,7 @@
           }
 
           addGraphic("finish", checkFinishPoint(finish_point.x, finish_point.y));
-          getRoute();
+          getRoute(false);
           // let input1 = document.querySelectorAll("ol.esri-directions__stops > li:nth-child(1) > div.esri-directions__stop-input > div.esri-search.esri-widget >"+
           // "div.esri-search--multiple-sources.esri-search__container > div.esri-search__input-container > form > input");
           // input1[0].value = '3.322'
@@ -1254,8 +1262,12 @@
         
         var route_task = "elevator";
         // var direction_extent = new Geometry();// route directions extent
+
+        var check_getRoute = false;
+        var check_defaultRoute = false;
         // get route
-        const getRoute = () => {
+        const getRoute = (standart) => {
+          console.log("getroute")
           section_ol.innerHTML = "";
           finish_point_graphic.removeAll();
           // search_result_graphic.removeAll();
@@ -1276,9 +1288,35 @@
             }),
             returnDirections: true
           });
-          if (route_task == "stairs") {
+          if (standart) {
+            check_defaultRoute = true;
+            // Get the route
+            standartRouteTask.solve(routeParams).then((data) => {
+              console.log(data)
+              // let features = data.routeResults[0].directions.features;
+              // // Display the route
+              // addSymbol(features);
+
+              // // Show the direction list
+              // let geom_route = route_graphic.graphics.items[0].geometry.clone();
+              // geom_route.spatialReference = {
+              //   wkid: 4326
+              // }
+              
+              // view.goTo({
+              //   target: geom_route,
+              //   scale: 2500
+              // });
+
+              // addRouteList(features);
+
+            });
+            view.ui.add(direction_div, "top-right");
+          } else if (route_task == "stairs") {
+            console.log("stairs data",data)
             // Get the route
             routeTaskStairs.solve(routeParams).then((data) => {
+              check_getRoute = true;
               let features = data.routeResults[0].directions.features;
               // Display the route
               addSymbol(features);
@@ -1300,7 +1338,8 @@
             view.ui.add(direction_div, "top-right");
           } else if (route_task == "elevator") {
             routeTaskElev.solve(routeParams).then((data) => {
-              // console.log("route data",data)
+              check_getRoute = true;
+              console.log("elev data",data)
               let features = data.routeResults[0].directions.features;
               // Display the route
               // addSymbol(data.routeResults);
@@ -1323,6 +1362,12 @@
             view.ui.add(direction_div, "top-right");
           }
           // console.log(view.graphics)
+          console.log(check_getRoute)
+          if (!check_getRoute && !check_defaultRoute) {
+            console.log("check")
+            getRoute(true);
+            check_defaultRoute = true;
+          }
         }
 
         var route_symbol = false;
@@ -1575,13 +1620,13 @@
         label_input.onchange = () => {
           if (route_task == "stairs") {
             route_task = "elevator";
-            getRoute();
+            getRoute(false);
             return;
             // let stairs_elev_a = document.getElementById('button_stairs_elev');
             // stairs_elev_a.innerHTML = "Хочу по лестнице!";
           } else if (route_task == "elevator") {
             route_task = "stairs";
-            getRoute();
+            getRoute(false);
             return;
             // let stairs_elev_a = document.getElementById('button_stairs_elev');
             // stairs_elev_a.innerHTML = "Хочу по лифту!";
