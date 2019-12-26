@@ -166,6 +166,7 @@
         flex-direction: column;
         position: absolute;
         top: 100px;
+        border-radius: 10px;
       }
       .li-floorBlockInfo {
         text-align: center;
@@ -212,23 +213,12 @@
       .direction-div {
         display: flex;
         flex-direction: column;
+        border-radius: 10px;
       }
       .route-header {
         position: absolute;
         width: 100%;
       }
-      /* .open {
-        display: inline-block;
-      }
-      .close {
-        display: none;
-      } */
-      /* .input-field > label:not(.label-icon).active {
-          -webkit-transform: translateY(-14px) scale(0.8);
-          transform: translateY(-2px) scale(0.9) !important;
-          -webkit-transform-origin: 0 0;
-          transform-origin: 0 0;
-      } */
     </style>
     <link
       href="https://fonts.googleapis.com/icon?family=Material+Icons"
@@ -257,9 +247,6 @@
         "esri/Graphic",
         "esri/layers/GraphicsLayer",
         // **Direction**
-        // "esri/widgets/Directions",
-        // "esri/tasks/Locator",
-        // "esri/symbols/SimpleMarkerSymbol",
         "esri/tasks/RouteTask",
         "esri/tasks/support/RouteParameters",
         "esri/tasks/support/FeatureSet",
@@ -269,7 +256,6 @@
         "esri/core/watchUtils",
         "esri/geometry/Geometry",
         "esri/geometry/Extent",
-        // "esri/tasks/Locator",
         "esri/geometry/Point",
         "esri/geometry/SpatialReference"
       ], function(
@@ -283,9 +269,6 @@
         Graphic,
         GraphicsLayer, 
         // **Direction**
-        // Directions,
-        // Locator,
-        // SimpleMarkerSymbol,
         RouteTask, 
         RouteParameters, 
         FeatureSet,
@@ -295,7 +278,6 @@
         watchUtils,
         Geometry,
         Extent,
-        // Locator,
         Point,
         SpatialReference
       ) {
@@ -491,7 +473,7 @@
 
         // room request on layers
         window.createDirectionFeature = (roomnum) => {
-          console.log(roomnum)
+          // console.log(roomnum)
           let sqlTxt = "roomnum = '" + roomnum + "'";
           let params = new Query({
             where: sqlTxt
@@ -529,7 +511,6 @@
           li.setAttribute('class', 'li-floorBlockInfo');
           li.innerHTML = title;
           ul.appendChild(li);
-          // floorDiv.appendChild(div);
         }
 
         // remove/add floor layer
@@ -598,7 +579,6 @@
         floorBlockInfo.forEach(el => {
           addFloorUI(el.title);
         })
-        // addFloorUI('all');???
 
         // **Search**
         // add Graphic
@@ -636,33 +616,9 @@
             "https://utility.arcgis.com/usrsvcs/appservices/36Pkp2TrX2alWMMY/rest/services/World/Route/NAServer/Route_World/solve"
         });
 
-        // var locator = new Locator ({
-        //   url: "https://kas.nu.edu.kz/arcgis/rest/services/NU/RoomsLocSF/GeocodeServer"
-        // })
-
-        // var directionsWidget = new Directions({
-        //   view: view,
-        //   routeServiceUrl: stairs_url,
-        //   searchProperties: {
-        //     popupEnabled: true,
-        //     resultGraphicEnabled: true,
-        //     searchAllEnabled: false,
-        //     activeSourceIndex: 1,
-        //     sources: [
-        //       {
-        //         locator: new Locator({
-        //           url:
-        //             "https://kas.nu.edu.kz/arcgis/rest/services/NU/RoomsLocSF/GeocodeServer"
-        //         }),
-        //         outFields: ["*"]
-        //       }
-        //     ]
-        //   }
-        // }); 
-
         var floor_visible_old = "1";
         view.when(function() {
-          console.log(location.search.substr(1));
+          // console.log(location.search.substr(1));
           var start_point;
           if (location.search.substr(1) == 2) {
             start_point = {
@@ -680,7 +636,6 @@
           search_menu.style.display = "block";
           view.ui.add(search_menu, "top-left");
           view.ui.add(floorDiv, 'top-left');
-          // view.ui.add(directionsWidget, "bottom-right");
           
           // click to Floor
           floorDiv.addEventListener('click', e => {
@@ -693,18 +648,6 @@
           map.add(search_result_graphic);
           map.add(route_graphic);
           
-          // map.layers.findIndex(el => {
-          //   console.log(el)
-          // })
-
-          // search_button.addEventListener('click', (e) => {
-          //   let pulse = document.querySelector("a.waves-effect");
-          //   if (pulse.classList.contains("pulse")) {
-          //     search_result_graphic.removeAll();
-          //     doQueryResult();
-          //   }
-          // })
-
           // Проверка клика
           document.body.addEventListener("click", function(e) {
             // console.log(e)
@@ -753,77 +696,20 @@
           
           addGraphic("start", start_point);
           
-          // var left_xmin = 7943853.67;
-          // var left_xmax = 7947928.01;
-          // var right_xmin = 7947688.98;
-          // var right_xmax = 7951763.32;
-          // var top_ymin = ;
-          // var bottom_ymax = ;
           // Watch view's extent property changed.
-          watchUtils.watch(view, "extent", function() {
+          watchUtils.watch(view, "extent", () => {
+            // console.log(view.extent)
             // Get the new extent of the view only when view crossed the border.
             if (view.extent) {
-              if ((view.extent.xmin < 7943853.67 && view.extent.xmax < 7947928.01)//left
+              if ((view.extent.xmin < 7946125.93 && view.extent.xmax < 7947320.79)//left
               || (view.extent.ymin > 6637894.10 && view.extent.ymax > 6640244.22)//top
-              || (view.extent.xmin > 7947688.98 && view.extent.xmax > 7951763.32)//right
+              || (view.extent.xmin > 7948575.22 && view.extent.xmax > 7949770.08)//right
               || (view.extent.ymin < 6634698.94 && view.extent.ymax < 6637126.94)) //bottom
               {
                   view.goTo(defaultViewCenter.center);
               }
             }
           });
-
-          // view.on("click", function(event) {
-          //   if (view.graphics.length === 1) {
-          //     addGraphic("finish", checkFinishPoint(event.mapPoint));
-          //     // Call the route service
-          //     getRoute();
-          //   } else {
-          //     view.graphics.removeAll();
-          //     addGraphic("start", start_point);
-          //     addGraphic("finish", checkFinishPoint(event.mapPoint));
-          //     getRoute();
-          //   }
-          // });
-
-          // let select = document.createElement("select");
-          // select.setAttribute(
-          //   "class",
-          //   "esri-directions__travel-modes-select esri-select"
-          // );
-          // select.setAttribute("id", "switch");
-          // select.setAttribute("aria-label", "лестница");
-          // select.setAttribute("title", "лестница");
-          // // create stairs/elevator
-          // let option1 = document.createElement("option");
-          // let option2 = document.createElement("option");
-          // option1.setAttribute("value", "1");
-          // option1.innerHTML = "Лестница";
-          // option2.setAttribute("value", "2");
-          // option2.innerHTML = "Лифт";
-          // select.append(option1);
-          // select.append(option2);
-          // // add select to widget
-          // setTimeout(() => {
-          //   let div_splitter = document.querySelector(
-          //     "div.esri-directions__section-splitter"
-          //   );
-          //   div_splitter.before(select);
-          // }, 1000);
-          // // check and direction request
-          // let select_index = select.selectedIndex;
-          // select.addEventListener("click", function() {
-          //   if (select_index != select.selectedIndex) {
-          //     if (select.selectedIndex == 0) {
-          //       directionsWidget.routeServiceUrl = stairs_url;
-          //       directionsWidget.getDirections();
-          //     } else if (select.selectedIndex == 1) {
-          //       directionsWidget.routeServiceUrl = elevator_url;
-          //       directionsWidget.getDirections();
-          //     }
-          //     select_index = select.selectedIndex;
-          //   }
-          // });
 
         });
         
@@ -843,105 +729,17 @@
           CloseDropdown();
           clearUlListSelf();
           let value = event.srcElement.value;
-          console.log(value.length)
+          // console.log(value.length)
           // console.log(value)
           if (!value == "") {
-            if (value.length >= 2) {  
+            if (value.length >= 2) {
               doQuery(value);
             }
           } else {
             console.log("input is empty");
           }
         })
-        //input.addEventListener('input', updateValue);
-        
-        // // keypress
-        // search_input.addEventListener("keypress", function(e) {
-        //   keyPress(e);
-        // });
-        // // // keydown
-        // search_input.addEventListener("keydown", function(e) {
-        //   keyDown(e);
-        // });
-        // // // paste
-        // search_input.addEventListener("paste", function(e) {
-        //   paste(e);
-        // });
-        // const keyPress = (e) => {
-        //   var code = e.charCode || e.keyCode || e.which;
-        //   // Check for tab and arrow keys (needed in Firefox)
-        //   if (
-        //     code !== 9 &&
-        //     (code < 37 || code > 40) &&
-        //     // and CTRL+C / CTRL+V
-        //     !(e.ctrlKey && (code === 99 || code === 118 || code === 97))
-        //   ) {
-        //     e.preventDefault();
-        //     var char = String.fromCharCode(code);
-        //     format_and_pos(char);
-        //   }
-        // };
-        // const keyDown = (e) => {
-        //   if (e.keyCode === 8 || e.keyCode === 46) {
-        //     // backspace or delete
-        //     e.preventDefault();
-        //     format_and_pos("", this.selectionStart === this.selectionEnd);
-        //   } else if (e.keyCode === 13) {
-        //     // doQuery(input.value, 5);
-        //     console.log("keyCode=13 => ", e);
-        //   }
-        // };
-        // const paste = (e) => {
-        //   e.preventDefault();
-        //   let paste = (event.clipboardData || window.clipboardData).getData(
-        //     "text"
-        //   );
-        //   format_and_pos(paste);
-        //   // for (var i = 0; i < paste.length; i++) {
-        //   //   format_and_pos(name, paste.charAt(i));
-        //   // }
-        // };
-        // // check entered char
-        // const format_and_pos = (char, backspace) => {
-        //   var input = search_input;
-        //   var start = 0;
-        //   var end = 0;
-        //   var pos = 0;
-        //   var value = input.value;
-        //   if (char !== false) {
-        //     start = input.selectionStart;
-        //     end = input.selectionEnd;
-        //     if (backspace && start > 0) {
-        //       // handle backspace onkeydown
-        //       start--;
-        //     }
-        //     // To be able to replace the selection if there is one
-        //     value = value.substring(0, start) + char + value.substring(end);
-        //     pos = start + char.length; // caret position
-        //   }
-        //   input.value = value;
-        //   if (char !== false) {
-        //     input.setSelectionRange(pos, pos);
-        //   }
-        //   // pulseAnimation(false);
-        //   // Если поля всех поисков пусты
-        //   if (!search_input.value) {
-        //     console.log("input is empty");
-        //     CloseDropdown();
-        //     clearUlListSelf();
-        //   // Если есть значение в поле поиска
-        //   } else {
-        //     // console.log(value)
-        //     CloseDropdown();
-        //     clearUlListSelf();
-        //     // Если все еще есть значение
-        //     if (input.value) {
-        //       doQuery(value);
-        //     // Если нет больше значение(Backspace)
-        //     } 
-        //   }
 
-        // };
 
         var block_search = false;
         // query for dropdown list
@@ -1102,7 +900,7 @@
           // let value = value.toString();
           if (value.toLowerCase().includes("б") || value.toLowerCase().includes("blo")) {
             if (value.toLowerCase().includes("blo")) {
-              console.log('blo')
+              // console.log('blo')
               if (value.includes("b") || value.includes("B")) value = value.toLowerCase().replace("b","Б")
               if (value.includes("l")) value = value.replace("l","л")
               if (value.includes("o")) value = value.replace("o","о")
@@ -1192,7 +990,7 @@
         
         // get query results
         const getResultsEnd = (response) => {
-          console.log("features = ", response.features);
+          // console.log("features = ", response.features);
           let features = response.features;
           let length = features.length;
           let geometry = features[0].geometry;
@@ -1297,13 +1095,6 @@
 
           addGraphic("finish", checkFinishPoint(finish_point.x, finish_point.y));
           getRoute(false);
-          // let input1 = document.querySelectorAll("ol.esri-directions__stops > li:nth-child(1) > div.esri-directions__stop-input > div.esri-search.esri-widget >"+
-          // "div.esri-search--multiple-sources.esri-search__container > div.esri-search__input-container > form > input");
-          // input1[0].value = '3.322'
-          // let input2 = document.querySelectorAll("ol.esri-directions__stops > li:nth-child(2) > div.esri-directions__stop-input > div.esri-search.esri-widget >"+
-          // "div.esri-search--multiple-sources.esri-search__container > div.esri-search__input-container > form > input");
-          
-          // directionsWidget.getDirections();
         }
 
         // add start/finish point
@@ -1340,7 +1131,7 @@
 
         // get route
         const getRoute = (standart) => {
-          console.log("getroute")
+          // console.log("getroute")
           section_ol.innerHTML = "";
           finish_point_graphic.removeAll();
           // search_result_graphic.removeAll();
@@ -1366,7 +1157,7 @@
             direction_divider.style.display = "none";
             // Get the route
             standartRouteTask.solve(routeParams).then((data) => {
-              console.log(data)
+              // console.log(data)
               let features = data.routeResults[0].directions.features;
               // Display the route
               addSymbol(features);
@@ -1424,10 +1215,9 @@
                   direction_button.style.display = "inline-block";
                   direction_divider.style.display = "block";
                 }
-                console.log("elev data",data)
+                // console.log("elev data",data)
                 let features = data.routeResults[0].directions.features;
                 // Display the route
-                // addSymbol(data.routeResults);
                 addSymbol(features);
 
                 // Show the direction list
@@ -1532,7 +1322,7 @@
                   let index = features[i+j].attributes.text.indexOf("floor");
                   let floor_number = features[i+j].attributes.text.slice(index+6,index+7);
 
-                  console.log(index)
+                  // console.log(index)
                   findLayer(Number(floor_number));
                 }
               } else if (result.attributes.text.includes("floor")) {
@@ -1547,7 +1337,7 @@
                 } else {
                   let index = features[i-j].attributes.text.indexOf("floor");
                   let floor_number = features[i-j].attributes.text.slice(index+6,index+7);
-                  console.log(index)
+                  // console.log(index)
                   
                   findLayer(Number(floor_number));
                 }
@@ -1614,41 +1404,6 @@
 
         }
 
-        // var point_finish;
-        // const findLocator = (value) => {
-        //   let address = {
-        //     "SingleKey": value
-        //   };
-        //   locator.addressToLocations({
-        //     address: address,
-        //     outFields: ["*"],
-        //     // outSpatialReference: {
-        //     //   wkid: 32642
-        //     // }
-        //   })
-        //   .then(function(results) {
-        //     results.forEach(function(result){
-        //       console.log("result",result)
-        //       let spatialRef = new SpatialReference ({
-        //         wkid: 102100,
-        //         // latestWkid: 3857,
-        //         // isWebMercator: true,
-        //         // isWrappable: true
-        //       })//32642
-        //       point_finish = new Point({
-        //         x: result.location.x,
-        //         y: result.location.y,
-        //         spatialReference: spatialRef
-        //       });
-        //       console.log("point finish",point_finish)
-        //     });
-            
-        //   }, function(err) { // Show no address found
-        //     console.log('error')
-        //     showPopup("No address found.", evt.mapPoint);
-        //   });
-        // }
-
         // Display the directions
         var direction_div = document.createElement("div");
         direction_div.classList = "esri-widget esri-widget--panel esri-directions__scroller direction-div";
@@ -1684,22 +1439,17 @@
         switches_label.appendChild(label_span);
         label_input.before(elev_text);
         label_span.after(stairs_text);
-        // var button_a = document.createElement("a");
-        // button_a.classList = "waves-effect waves-light btn-small small-padding";
-        // button_a.id = "button_stairs_elev";
+        
         var section_ol = document.createElement("ol");
         section_ol.classList = "esri-directions__maneuver-list";
         section_ol.style.marginTop = 0;
         section_ol.style.paddingTop = "15px";
         direction_div_title.appendChild(title_name);
-        // direction_div.appendChild(direction_div_title);
         direction_div_title.appendChild(close_a);
-        direction_div_header.appendChild(direction_div_title)
-        direction_div_header.appendChild(direction_button)
-        // direction_div.appendChild(direction_button);
+        direction_div_header.appendChild(direction_div_title);
+        direction_div_header.appendChild(direction_button);
         direction_div_header.appendChild(direction_divider);
         direction_div.appendChild(direction_div_header);
-        // direction_div.appendChild(direction_divider);
         direction_div.appendChild(direction_section);
         direction_section.appendChild(section_ol);
         
