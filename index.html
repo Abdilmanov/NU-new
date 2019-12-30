@@ -24,7 +24,7 @@
       }
 
       ::-webkit-scrollbar {
-        width: 10px;
+        width: 12px;
         background-color: #F5F5F5;
       }
 
@@ -502,7 +502,7 @@
             latitude: geom.latitude,
             longitude: geom.longitude
           }
-          getRoute(false);
+          getRoute(false, true);
         }
         // add Floor
         const addFloorUI = title => {
@@ -597,17 +597,21 @@
         
 
         // **Direction** 10.10.17.13:6443  kazaerospace01 kas.nu.edu.kz
-        var stairs_url =
-          "https://kas.nu.edu.kz/arcgis/rest/services/NU/routeStairs/NAServer/%D0%9C%D0%B0%D1%80%D1%88%D1%80%D1%83%D1%82";
-        var elevator_url =
-          "https://kas.nu.edu.kz/arcgis/rest/services/NU/Routeelevator/NAServer/%D0%9C%D0%B0%D1%80%D1%88%D1%80%D1%83%D1%82";
-        // var elevator_url = // new url ???
+        // var stairs_url =
+        //   "https://kas.nu.edu.kz/arcgis/rest/services/NU/routeStairs/NAServer/%D0%9C%D0%B0%D1%80%D1%88%D1%80%D1%83%D1%82";
+        
+        var route_url =
+        "https://kas.nu.edu.kz/arcgis/rest/services/NU/RouteND/NAServer/RouteND";
+        // "https://kas.nu.edu.kz/arcgis/rest/services/NU/Routeelevator/NAServer/%D0%9C%D0%B0%D1%80%D1%88%D1%80%D1%83%D1%82";
+        
+        // var route_url = // new url ???
         //   "https://kazaerospace01/arcgis/rest/services/NU/RouteSeparate/NAServer/%D0%9C%D0%B0%D1%80%D1%88%D1%80%D1%83%D1%82";
-        var routeTaskStairs = new RouteTask({
-          url: stairs_url
-        });
-        var routeTaskElev = new RouteTask({
-          url: elevator_url
+        
+        // var routeTaskStairs = new RouteTask({
+        //   url: stairs_url
+        // });
+        var routeTask = new RouteTask({
+          url: route_url
         });
         // ArcGIS Online hosted service proxy
         var standartRouteTask = new RouteTask({
@@ -1094,7 +1098,7 @@
           }
 
           addGraphic("finish", checkFinishPoint(finish_point.x, finish_point.y));
-          getRoute(false);
+          getRoute(false, true);
         }
 
         // add start/finish point
@@ -1126,11 +1130,11 @@
           }
         }
         
-        var route_task = "elevator";
+        // var route_task = "elevator";
         // var direction_extent = new Geometry();// route directions extent
 
         // get route
-        const getRoute = (standart) => {
+        const getRoute = (standart, elevator) => {
           // console.log("getroute")
           section_ol.innerHTML = "";
           finish_point_graphic.removeAll();
@@ -1150,8 +1154,14 @@
                   }
                 ]
             }),
-            returnDirections: true
+            returnDirections: true,
           });
+          if (elevator) {
+            label_input.checked = false;
+            routeParams.restrictionAttributes = "RestrictStairs";
+          } else {
+            routeParams.restrictionAttributes = "RestrictElevator";
+          }
           if (standart) {
             direction_button.style.display = "none";
             direction_divider.style.display = "none";
@@ -1180,65 +1190,93 @@
               console.log("standart error", error)
             });
           } else {
-            if (route_task == "stairs") {
-              // Get the route
-              routeTaskStairs.solve(routeParams).then((data) => {
-                if (direction_button.style.display = "none") {
-                  direction_button.style.display = "inline-block";
-                  direction_divider.style.display = "block";
-                }
-                let features = data.routeResults[0].directions.features;
-                // Display the route
-                addSymbol(features);
+            routeTask.solve(routeParams).then((data) => {
+              if (direction_button.style.display = "none") {
+                direction_button.style.display = "inline-block";
+                direction_divider.style.display = "block";
+              }
+              // console.log("elev data",data)
+              let features = data.routeResults[0].directions.features;
+              // Display the route
+              addSymbol(features);
 
-                // Show the direction list
-                let geom_route = route_graphic.graphics.items[0].geometry.clone();
-                geom_route.spatialReference = {
-                  wkid: 4326
-                }
-                
-                view.goTo({
-                  target: geom_route,
-                  scale: 2500
-                });
-
-                addRouteList(features);
-
-                view.ui.add(direction_div, "top-right");
-              }, (error) => {
-                console.log("stairs error", error)
-                getRoute(true);
+              // Show the direction list
+              let geom_route = route_graphic.graphics.items[0].geometry.clone();
+              geom_route.spatialReference = {
+                wkid: 4326
+              }
+              // console.log(geom_route)
+              view.goTo({
+                target: geom_route,
+                scale: 2500
               });
-            } else if (route_task == "elevator") {
-              routeTaskElev.solve(routeParams).then((data) => {
-                if (direction_button.style.display = "none") {
-                  direction_button.style.display = "inline-block";
-                  direction_divider.style.display = "block";
-                }
-                // console.log("elev data",data)
-                let features = data.routeResults[0].directions.features;
-                // Display the route
-                addSymbol(features);
 
-                // Show the direction list
-                let geom_route = route_graphic.graphics.items[0].geometry.clone();
-                geom_route.spatialReference = {
-                  wkid: 4326
-                }
-                // console.log(geom_route)
-                view.goTo({
-                  target: geom_route,
-                  scale: 2500
-                });
+              addRouteList(features);
 
-                addRouteList(features);
+              view.ui.add(direction_div, "top-right");
+            }, (error) => {
+              console.log("elev error", error)
+              getRoute(true);
+            })
+            // if (route_task == "stairs") {
+            //   // Get the route
+            //   routeTaskStairs.solve(routeParams).then((data) => {
+            //     if (direction_button.style.display = "none") {
+            //       direction_button.style.display = "inline-block";
+            //       direction_divider.style.display = "block";
+            //     }
+            //     let features = data.routeResults[0].directions.features;
+            //     // Display the route
+            //     addSymbol(features);
 
-                view.ui.add(direction_div, "top-right");
-              }, (error) => {
-                console.log("elev error", error)
-                getRoute(true);
-              })
-            }
+            //     // Show the direction list
+            //     let geom_route = route_graphic.graphics.items[0].geometry.clone();
+            //     geom_route.spatialReference = {
+            //       wkid: 4326
+            //     }
+                
+            //     view.goTo({
+            //       target: geom_route,
+            //       scale: 2500
+            //     });
+
+            //     addRouteList(features);
+
+            //     view.ui.add(direction_div, "top-right");
+            //   }, (error) => {
+            //     console.log("stairs error", error)
+            //     getRoute(true);
+            //   });
+            // } else if (route_task == "elevator") {
+            //   routeTask.solve(routeParams).then((data) => {
+            //     if (direction_button.style.display = "none") {
+            //       direction_button.style.display = "inline-block";
+            //       direction_divider.style.display = "block";
+            //     }
+            //     // console.log("elev data",data)
+            //     let features = data.routeResults[0].directions.features;
+            //     // Display the route
+            //     addSymbol(features);
+
+            //     // Show the direction list
+            //     let geom_route = route_graphic.graphics.items[0].geometry.clone();
+            //     geom_route.spatialReference = {
+            //       wkid: 4326
+            //     }
+            //     // console.log(geom_route)
+            //     view.goTo({
+            //       target: geom_route,
+            //       scale: 2500
+            //     });
+
+            //     addRouteList(features);
+
+            //     view.ui.add(direction_div, "top-right");
+            //   }, (error) => {
+            //     console.log("elev error", error)
+            //     getRoute(true);
+            //   })
+            // }
           }
 
         }
@@ -1382,7 +1420,7 @@
             return "https://js.arcgis.com/4.13/esri/themes/base/images/maneuvers/straight.png";
           } else if (text.indexOf("Bear right", 0) == 0) {//??
             return "https://js.arcgis.com/4.13/esri/themes/base/images/maneuvers/straight.png";
-          } else if (text.indexOf("sharp left", 0) == 0) {
+          } else if (text.includes("sharp left", 0) == 0) {
             if (text.includes("immediately turn right")) {
               return "https://js.arcgis.com/4.13/esri/themes/base/images/maneuvers/left-right.png";
             } else if (text.includes("immediately turn left")) {
@@ -1390,7 +1428,7 @@
             } else {
               return "https://js.arcgis.com/4.13/esri/themes/base/images/maneuvers/sharp-left.png";
             }
-          } else if (text.indexOf("sharp right", 0) == 0) {
+          } else if (text.includes("sharp right", 0) == 0) {
             if (text.includes("immediately turn right")) {
               return "https://js.arcgis.com/4.13/esri/themes/base/images/maneuvers/right-right.png";
             } else if (text.includes("immediately turn left")) {
@@ -1454,19 +1492,16 @@
         direction_section.appendChild(section_ol);
         
         // change route list(stairs/elevator)
-        label_input.onchange = () => {
-          if (route_task == "stairs") {
-            route_task = "elevator";
-            getRoute(false);
+        label_input.onchange = (e) => {
+          console.log(label_input.checked)
+          if (!e.target.checked) {
+            // route_task = "elevator";
+            getRoute(false, true);
             return;
-            // let stairs_elev_a = document.getElementById('button_stairs_elev');
-            // stairs_elev_a.innerHTML = "Хочу по лестнице!";
-          } else if (route_task == "elevator") {
-            route_task = "stairs";
-            getRoute(false);
+          } else {
+            // route_task = "stairs";
+            getRoute(false, false);
             return;
-            // let stairs_elev_a = document.getElementById('button_stairs_elev');
-            // stairs_elev_a.innerHTML = "Хочу по лифту!";
           }
         }
 
